@@ -199,21 +199,6 @@ Project-Latte/
 
 ---
 
-## Hardware Requirements
-
-### Minimum
-- Intel Core i5 / AMD Ryzen 5
-- 8 GB RAM
-- 500 MB SSD storage
-- 1280x720 display (landscape recommended)
-
-### Recommended
-- Intel Core i7 / AMD Ryzen 7
-- 16 GB RAM
-- 1 GB SSD storage
-- 1920x1080+ display
-
----
 
 ## Peripherals Support
 
@@ -265,12 +250,6 @@ Proprietary - Project Latte (Coffee Shop POS System)
 
 ---
 
-## Contact & Support
-
-**Developer**: Your Name  
-**Email**: your.email@example.com  
-**Last Updated**: May 18, 2026
-
 ---
 
 ## Changelog
@@ -283,5 +262,3 @@ Proprietary - Project Latte (Coffee Shop POS System)
 - Complete BIR Tax Compliance & e-Wallet Numpad Integration
 
 ---
-
-**Happy Selling!**
