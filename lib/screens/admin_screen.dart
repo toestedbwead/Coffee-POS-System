@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:pdf/pdf.dart';
@@ -969,7 +970,19 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
       ),
     );
 
-    await Printing.sharePdf(bytes: await doc.save(), filename: '${orderProvider.storeName.replaceAll(" ", "_")}_${type}_Report_${DateFormat('yyyyMMdd').format(_selectedDate)}.pdf');
+    final cleanStoreName = orderProvider.storeName.replaceAll(RegExp(r'[^a-zA-Z0-9]'), '_');
+    final filename = '${cleanStoreName}_${type}_Report_${DateFormat('yyyyMMdd').format(_selectedDate)}.pdf';
+    final bytes = await doc.save();
+
+    try {
+      final userProfile = Platform.environment['USERPROFILE'];
+      if (userProfile != null) {
+        final desktopPath = '$userProfile\\Desktop\\$filename';
+        await File(desktopPath).writeAsBytes(bytes);
+      }
+    } catch (_) {}
+
+    await Printing.sharePdf(bytes: bytes, filename: filename);
   }
 
   Future<void> _exportMonthlyCsv() async {
@@ -998,16 +1011,34 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
       csv.writeln('${o["id"]},${o["timestamp"]},${o["subtotal"]},${o["taxAmount"]},${o["total"]},${o["paymentMethod"]},${o["status"]},$custName,$discount');
     }
 
-    final filename = '${orderProvider.storeName.replaceAll(" ", "_")}_Filtered_Accounting_${DateFormat('yyyyMMdd').format(DateTime.now())}.csv';
+    final cleanStoreName = orderProvider.storeName.replaceAll(RegExp(r'[^a-zA-Z0-9]'), '_');
+    final filename = '${cleanStoreName}_Filtered_Accounting_${DateFormat('yyyyMMdd').format(DateTime.now())}.csv';
+    String savedPath = '';
+
+    try {
+      final userProfile = Platform.environment['USERPROFILE'];
+      if (userProfile != null) {
+        savedPath = '$userProfile\\Desktop\\$filename';
+        await File(savedPath).writeAsString(csv.toString());
+      }
+    } catch (_) {}
+
     final bytes = utf8.encode(csv.toString());
     await Printing.sharePdf(bytes: bytes, filename: filename);
 
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('CSV Export Generated: ${orders.length} transactions matching your filters.'),
+          content: Text(savedPath.isNotEmpty 
+              ? 'CSV Export Saved Successfully to Desktop!\nFile: $filename' 
+              : 'CSV Export Generated: ${orders.length} transactions matching your filters.'),
           backgroundColor: AppColors.success,
-          duration: const Duration(seconds: 4),
+          duration: const Duration(seconds: 6),
+          action: SnackBarAction(
+            label: 'OK',
+            textColor: AppColors.white,
+            onPressed: () {},
+          ),
         ),
       );
     }
@@ -1060,16 +1091,34 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
       }
     }
 
-    final filename = '${orderProvider.storeName.replaceAll(" ", "_")}_Filtered_Inventory_${DateFormat('yyyyMMdd').format(DateTime.now())}.csv';
+    final cleanStoreName = orderProvider.storeName.replaceAll(RegExp(r'[^a-zA-Z0-9]'), '_');
+    final filename = '${cleanStoreName}_Filtered_Inventory_${DateFormat('yyyyMMdd').format(DateTime.now())}.csv';
+    String savedPath = '';
+
+    try {
+      final userProfile = Platform.environment['USERPROFILE'];
+      if (userProfile != null) {
+        savedPath = '$userProfile\\Desktop\\$filename';
+        await File(savedPath).writeAsString(csv.toString());
+      }
+    } catch (_) {}
+
     final bytes = utf8.encode(csv.toString());
     await Printing.sharePdf(bytes: bytes, filename: filename);
 
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Itemized CSV Generated: $totalItemsExported line items matching your filters.'),
+          content: Text(savedPath.isNotEmpty 
+              ? 'Inventory CSV Saved Successfully to Desktop!\nFile: $filename' 
+              : 'Itemized CSV Generated: $totalItemsExported line items matching your filters.'),
           backgroundColor: AppColors.success,
-          duration: const Duration(seconds: 4),
+          duration: const Duration(seconds: 6),
+          action: SnackBarAction(
+            label: 'OK',
+            textColor: AppColors.white,
+            onPressed: () {},
+          ),
         ),
       );
     }
