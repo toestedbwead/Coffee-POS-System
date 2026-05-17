@@ -10,12 +10,10 @@ class OrderProvider with ChangeNotifier {
   List<OrderItem> _items = [];
   bool _applySCPWD = false;
   String? _scPwdID;
-  List<Product> _menuProducts = mockProducts;
-
   List<OrderItem> get items => _items;
   bool get applySCPWD => _applySCPWD;
   String? get scPwdID => _scPwdID;
-  List<Product> get menuProducts => _menuProducts;
+  List<Product> get menuProducts => mockProducts;
 
   // Calculation Getters using TaxService
   double get subtotal => _items.fold(0, (sum, item) => sum + item.getTotal());
@@ -103,22 +101,19 @@ class OrderProvider with ChangeNotifier {
 
   // Menu Management Actions
   void updateProduct(Product updatedProduct) {
-    final index = _menuProducts.indexWhere((p) => p.id == updatedProduct.id);
+    final index = mockProducts.indexWhere((p) => p.id == updatedProduct.id);
     if (index != -1) {
-      _menuProducts[index] = updatedProduct;
       mockProducts[index] = updatedProduct;
       notifyListeners();
     }
   }
 
   void addProduct(Product newProduct) {
-    _menuProducts.add(newProduct);
     mockProducts.add(newProduct);
     notifyListeners();
   }
 
   void deleteProduct(String productId) {
-    _menuProducts.removeWhere((p) => p.id == productId);
     mockProducts.removeWhere((p) => p.id == productId);
     notifyListeners();
   }

@@ -889,9 +889,10 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
                                 ElevatedButton(
                                   style: ElevatedButton.styleFrom(backgroundColor: AppColors.error, foregroundColor: AppColors.white),
                                   onPressed: () {
+                                    final messenger = ScaffoldMessenger.of(context);
                                     context.read<OrderProvider>().deleteProduct(product.id);
                                     Navigator.pop(context);
-                                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('${product.name} deleted'), backgroundColor: AppColors.error));
+                                    messenger.showSnackBar(SnackBar(content: Text('${product.name} deleted successfully'), backgroundColor: AppColors.error));
                                   },
                                   child: const Text('DELETE'),
                                 ),
