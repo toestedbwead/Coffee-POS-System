@@ -178,135 +178,145 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
               ),
               const SizedBox(height: 20),
 
-              // Badges Row
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: isVoided ? AppColors.error : AppColors.success,
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Text(
-                      order['status'] as String,
-                      style: AppTypography.labelMedium.copyWith(color: AppColors.white),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: AppColors.primary,
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Text(
-                      order['paymentMethod'] as String,
-                      style: AppTypography.labelMedium.copyWith(color: AppColors.white),
-                    ),
-                  ),
-                  if (scPwdApplied) ...[
-                    const SizedBox(width: 12),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: AppColors.accent,
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Text(
-                        'SC/PWD Applied',
-                        style: AppTypography.labelMedium.copyWith(color: AppColors.white),
-                      ),
-                    ),
-                  ],
-                ],
-              ),
-              const SizedBox(height: 24),
-
-              // Items List
-              Text(
-                'Itemized Breakdown',
-                style: AppTypography.labelMedium,
-              ),
-              const SizedBox(height: 12),
-              Container(
-                constraints: const BoxConstraints(maxHeight: 250),
-                decoration: BoxDecoration(
-                  border: Border.all(color: AppColors.mediumGray.withValues(alpha: 0.3)),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: ListView.separated(
-                  shrinkWrap: true,
-                  itemCount: items.length,
-                  separatorBuilder: (context, index) => const Divider(height: 1),
-                  itemBuilder: (context, index) {
-                    final item = items[index];
-                    return ListTile(
-                      title: Text(
-                        '${item['quantity']}x ${item['productName']}',
-                        style: AppTypography.bodyLarge.copyWith(fontWeight: FontWeight.bold),
-                      ),
-                      subtitle: Text(
-                        '${item['selectedSize']} • ${item['selectedTemperature']}\nAdd-ons: ${item['selectedAddOns'].toString().isEmpty ? "None" : item['selectedAddOns']}',
-                        style: AppTypography.bodySmall,
-                      ),
-                      trailing: Text(
-                        '₱${(item['itemTotal'] as double).toStringAsFixed(2)}',
-                        style: AppTypography.bodyLarge.copyWith(color: AppColors.primary),
-                      ),
-                    );
-                  },
-                ),
-              ),
-              const SizedBox(height: 24),
-
-              // Totals Summary Box
-              Container(
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: AppColors.lightGray,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Column(
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text('Subtotal:', style: AppTypography.bodyRegular),
-                        Text('₱${(order['subtotal'] as double).toStringAsFixed(2)}', style: AppTypography.bodyRegular),
-                      ],
-                    ),
-                    if (scPwdApplied) ...[
-                      const SizedBox(height: 8),
+              // Scrollable Body (Badges, Items List, Totals Summary Box)
+              Flexible(
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Badges Row
                       Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text('SC/PWD Discount:', style: AppTypography.bodyRegular.copyWith(color: AppColors.accent)),
-                          Text('-₱${discountAmount.toStringAsFixed(2)}', style: AppTypography.bodyRegular.copyWith(color: AppColors.accent, fontWeight: FontWeight.bold)),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: isVoided ? AppColors.error : AppColors.success,
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Text(
+                              order['status'] as String,
+                              style: AppTypography.labelMedium.copyWith(color: AppColors.white),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: AppColors.primary,
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Text(
+                              order['paymentMethod'] as String,
+                              style: AppTypography.labelMedium.copyWith(color: AppColors.white),
+                            ),
+                          ),
+                          if (scPwdApplied) ...[
+                            const SizedBox(width: 12),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                              decoration: BoxDecoration(
+                                color: AppColors.accent,
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: Text(
+                                'SC/PWD Applied',
+                                style: AppTypography.labelMedium.copyWith(color: AppColors.white),
+                              ),
+                            ),
+                          ],
                         ],
                       ),
-                    ],
-                    const SizedBox(height: 8),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text('Tax (12% VAT):', style: AppTypography.bodySmall),
-                        Text(scPwdApplied ? 'VAT Exempt' : '₱${(order['taxAmount'] as double).toStringAsFixed(2)}', style: AppTypography.bodySmall),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    const Divider(color: AppColors.mediumGray),
-                    const SizedBox(height: 12),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text('Total Paid:', style: AppTypography.h3),
-                        Text(
-                          '₱${(order['total'] as double).toStringAsFixed(2)}',
-                          style: AppTypography.priceTag.copyWith(fontSize: 28),
+                      const SizedBox(height: 24),
+
+                      // Items List
+                      Text(
+                        'Itemized Breakdown',
+                        style: AppTypography.labelMedium,
+                      ),
+                      const SizedBox(height: 12),
+                      Container(
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(12),
                         ),
-                      ],
-                    ),
-                  ],
+                        child: ListView.separated(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          itemCount: items.length,
+                          separatorBuilder: (context, index) => const Divider(height: 1),
+                          itemBuilder: (context, index) {
+                            final item = items[index];
+                            return ListTile(
+                              title: Text(
+                                '${item['quantity']}x ${item['productName']}',
+                                style: AppTypography.bodyLarge.copyWith(fontWeight: FontWeight.bold),
+                              ),
+                              subtitle: Text(
+                                '${item['selectedSize']} • ${item['selectedTemperature']}\nAdd-ons: ${item['selectedAddOns'].toString().isEmpty ? "None" : item['selectedAddOns']}',
+                                style: AppTypography.bodySmall,
+                              ),
+                              trailing: Text(
+                                '₱${(item['itemTotal'] as double).toStringAsFixed(2)}',
+                                style: AppTypography.bodyLarge.copyWith(color: AppColors.primary),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+
+                      // Totals Summary Box
+                      Container(
+                        padding: const EdgeInsets.all(20),
+                        decoration: BoxDecoration(
+                          color: AppColors.lightGray,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Column(
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text('Subtotal:', style: AppTypography.bodyRegular),
+                                Text('₱${(order['subtotal'] as double).toStringAsFixed(2)}', style: AppTypography.bodyRegular),
+                              ],
+                            ),
+                            if (scPwdApplied) ...[
+                              const SizedBox(height: 8),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text('SC/PWD Discount:', style: AppTypography.bodyRegular.copyWith(color: AppColors.accent)),
+                                  Text('-₱${discountAmount.toStringAsFixed(2)}', style: AppTypography.bodyRegular.copyWith(color: AppColors.accent, fontWeight: FontWeight.bold)),
+                                ],
+                              ),
+                            ],
+                            const SizedBox(height: 8),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text('Tax (12% VAT):', style: AppTypography.bodySmall),
+                                Text(scPwdApplied ? 'VAT Exempt' : '₱${(order['taxAmount'] as double).toStringAsFixed(2)}', style: AppTypography.bodySmall),
+                              ],
+                            ),
+                            const SizedBox(height: 12),
+                            const Divider(color: AppColors.mediumGray),
+                            const SizedBox(height: 12),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text('Total Paid:', style: AppTypography.h3),
+                                Text(
+                                  '₱${(order['total'] as double).toStringAsFixed(2)}',
+                                  style: AppTypography.priceTag.copyWith(fontSize: 28),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
               const SizedBox(height: 28),
