@@ -9,6 +9,8 @@ import '../widgets/payment_modal.dart';
 import '../widgets/scpwd_dialog.dart';
 import '../widgets/receipt_preview.dart';
 import 'history_screen.dart';
+import 'admin_screen.dart';
+
 
 
 class CashierScreen extends StatefulWidget {
@@ -50,6 +52,91 @@ class _CashierScreenState extends State<CashierScreen> {
     context.read<OrderProvider>().clearOrder();
   }
 
+  Future<void> _openAdminConsole() async {
+    final TextEditingController pinController = TextEditingController();
+    bool isPinValid = false;
+
+    final bool? confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) {
+          return Dialog(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            child: Container(
+              width: 420,
+              padding: const EdgeInsets.all(28),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      const Icon(Icons.admin_panel_settings, size: 32, color: AppColors.primary),
+                      const SizedBox(width: 16),
+                      Text(
+                        'Admin Authorization',
+                        style: AppTypography.h2.copyWith(color: AppColors.primary),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Accessing the Admin Management Console requires authorization. Please enter your 4-digit Admin PIN below (Default: 1234).',
+                    style: AppTypography.bodyRegular,
+                  ),
+                  const SizedBox(height: 24),
+                  TextField(
+                    controller: pinController,
+                    obscureText: true,
+                    keyboardType: TextInputType.number,
+                    style: AppTypography.h3.copyWith(letterSpacing: 8, fontSize: 28),
+                    textAlign: TextAlign.center,
+                    decoration: InputDecoration(
+                      hintText: '••••',
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                    onChanged: (value) {
+                      setState(() {
+                        isPinValid = value.trim() == '1234';
+                      });
+                    },
+                    autofocus: true,
+                  ),
+                  const SizedBox(height: 32),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(context, false),
+                        child: const Text('Cancel', style: TextStyle(fontSize: 16)),
+                      ),
+                      const SizedBox(width: 16),
+                      LatteButton(
+                        label: 'AUTHORIZE',
+                        width: 150,
+                        backgroundColor: isPinValid ? AppColors.primary : AppColors.mediumGray,
+                        onPressed: isPinValid ? () => Navigator.pop(context, true) : null,
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+
+    if (confirm == true && mounted) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => const AdminDashboardScreen()),
+      );
+    }
+  }
+
+
+
   @override
   Widget build(BuildContext context) {
     final orderProvider = context.watch<OrderProvider>();
@@ -76,6 +163,12 @@ class _CashierScreenState extends State<CashierScreen> {
                 ),
               );
             },
+          ),
+          const SizedBox(width: 8),
+          IconButton(
+            icon: const Icon(Icons.admin_panel_settings, size: 28),
+            tooltip: 'Admin Console',
+            onPressed: _openAdminConsole,
           ),
           const SizedBox(width: 16),
         ],

@@ -89,16 +89,16 @@ Project Latte is a high-speed, offline-first Point of Sale (POS) system built wi
   - [x] Receipt archiving in database
 
 #### Phase 6: Admin & Reporting
-- [ ] Admin dashboard:
+- [x] Admin dashboard:
   - Daily sales summary
   - Top-selling items
   - Revenue trends
   - Transaction history
-- [ ] Export functionality:
+- [x] Export functionality:
   - CSV export for accounting
   - Excel reports
   - Daily/weekly/monthly reports
-- [ ] Settings panel:
+- [x] Settings panel:
   - Shop info configuration
   - Tax settings
   - Printer settings

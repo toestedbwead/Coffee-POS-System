@@ -39,15 +39,12 @@ class ReceiptPreviewModal extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Thermal Receipt Paper Body (Scrollable!)
-            Flexible(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(28),
-                child: Column(
-
+            // Thermal Receipt Paper Header (FIXED!)
+            Padding(
+              padding: const EdgeInsets.only(top: 28, left: 28, right: 28, bottom: 8),
+              child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  // Store Header
                   const Text(
                     'PROJECT LATTE COFFEE',
                     style: TextStyle(fontFamily: 'Courier', fontSize: 22, fontWeight: FontWeight.bold, color: Colors.black),
@@ -63,7 +60,6 @@ class ReceiptPreviewModal extends StatelessWidget {
                   const Text('----------------------------------------', style: TextStyle(fontFamily: 'Courier', color: Colors.black54)),
                   const SizedBox(height: 8),
 
-                  // Receipt Metadata
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -81,10 +77,19 @@ class ReceiptPreviewModal extends StatelessWidget {
                   ),
                   const SizedBox(height: 8),
                   const Text('----------------------------------------', style: TextStyle(fontFamily: 'Courier', color: Colors.black54)),
-                  const SizedBox(height: 16),
+                ],
+              ),
+            ),
 
-                  // Itemized Lines
-                  ...order.items.map((item) {
+            // Thermal Receipt Items List (COMPACT & CONSTRAINED!)
+            Container(
+              constraints: const BoxConstraints(maxHeight: 160), // Perfectly fits 3-4 items, scrolls only if more!
+              padding: const EdgeInsets.symmetric(horizontal: 28),
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: order.items.map((item) {
                     return Padding(
                       padding: const EdgeInsets.only(bottom: 12),
                       child: Column(
@@ -118,13 +123,20 @@ class ReceiptPreviewModal extends StatelessWidget {
                         ],
                       ),
                     );
-                  }),
+                  }).toList(),
+                ),
+              ),
+            ),
 
-                  const SizedBox(height: 8),
+            // Thermal Receipt Totals & QR Code (FIXED!)
+            Padding(
+              padding: const EdgeInsets.only(top: 8, left: 28, right: 28, bottom: 24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
                   const Text('----------------------------------------', style: TextStyle(fontFamily: 'Courier', color: Colors.black54)),
                   const SizedBox(height: 16),
 
-                  // Totals Calculation
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -184,7 +196,6 @@ class ReceiptPreviewModal extends StatelessWidget {
                 ],
               ),
             ),
-          ), // Closing Flexible
 
           // Bottom Action Bar (Dark background simulating the POS printer dock)
             Container(
