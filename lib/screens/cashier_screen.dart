@@ -532,6 +532,7 @@ class _ProductSelectionDialogState extends State<ProductSelectionDialog> {
   late String selectedSize;
   late String selectedTemperature;
   List<AddOn> selectedAddOns = [];
+  bool showAddOns = false;
 
   @override
   void initState() {
@@ -608,29 +609,94 @@ class _ProductSelectionDialogState extends State<ProductSelectionDialog> {
               ),
               const SizedBox(height: 24),
 
-              // ADD-ONS SELECTION
-              Text(
-                'Add-ons (Optional)',
-                style: AppTypography.labelMedium,
+              // ADD-ONS SELECTION TOGGLE HEADER
+              InkWell(
+                onTap: () {
+                  setState(() {
+                    showAddOns = !showAddOns;
+                  });
+                },
+                borderRadius: BorderRadius.circular(12),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                  decoration: BoxDecoration(
+                    color: showAddOns ? AppColors.primary.withValues(alpha: 0.05) : AppColors.background,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: AppColors.primary.withValues(alpha: 0.2)),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(
+                            showAddOns ? Icons.remove_circle_outline : Icons.add_circle_outline,
+                            color: AppColors.primary,
+                            size: 22,
+                          ),
+                          const SizedBox(width: 12),
+                          Text(
+                            'Include Add-ons (Optional)',
+                            style: AppTypography.labelMedium.copyWith(color: AppColors.primary),
+                          ),
+                        ],
+                      ),
+                      Row(
+                        children: [
+                          if (selectedAddOns.isNotEmpty)
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                              margin: const EdgeInsets.only(right: 8),
+                              decoration: BoxDecoration(
+                                color: AppColors.accent,
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Text(
+                                '${selectedAddOns.length}',
+                                style: AppTypography.labelSmall.copyWith(color: AppColors.white, fontWeight: FontWeight.bold),
+                              ),
+                            ),
+                          Icon(
+                            showAddOns ? Icons.expand_less_rounded : Icons.expand_more_rounded,
+                            color: AppColors.primary,
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
               ),
-              const SizedBox(height: 8),
-              ...widget.product.addOns.map((addOn) {
-                final isSelected = selectedAddOns.contains(addOn);
-                return CheckboxListTile(
-                  title: Text(addOn.name),
-                  subtitle: Text('₱${addOn.price}'),
-                  value: isSelected,
-                  onChanged: (value) {
-                    setState(() {
-                      if (value == true) {
-                        selectedAddOns.add(addOn);
-                      } else {
-                        selectedAddOns.remove(addOn);
-                      }
-                    });
-                  },
-                );
-              }).toList(),
+              if (showAddOns) ...[
+                const SizedBox(height: 12),
+                Container(
+                  decoration: BoxDecoration(
+                    color: AppColors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: AppColors.primary.withValues(alpha: 0.15)),
+                  ),
+                  child: Column(
+                    children: widget.product.addOns.map((addOn) {
+                      final isSelected = selectedAddOns.contains(addOn);
+                      return CheckboxListTile(
+                        title: Text(addOn.name, style: AppTypography.bodyRegular.copyWith(color: AppColors.primary, fontWeight: isSelected ? FontWeight.bold : FontWeight.normal)),
+                        subtitle: Text('₱${addOn.price}', style: AppTypography.bodySmall.copyWith(color: AppColors.accent)),
+                        value: isSelected,
+                        activeColor: AppColors.primary,
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                        onChanged: (value) {
+                          setState(() {
+                            if (value == true) {
+                              selectedAddOns.add(addOn);
+                            } else {
+                              selectedAddOns.remove(addOn);
+                            }
+                          });
+                        },
+                      );
+                    }).toList(),
+                  ),
+                ),
+              ],
               const SizedBox(height: 24),
 
               // Price & Buttons

@@ -121,6 +121,10 @@ class ItemCard extends StatelessWidget {
     this.isAvailable = true,
   }) : super(key: key);
 
+  Color _getBadgeColor(String code) {
+    return AppColors.primary; // Espresso for ALL categories!
+  }
+
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
@@ -146,41 +150,28 @@ class ItemCard extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                         decoration: BoxDecoration(
-                          color: AppColors.primary.withValues(alpha: 0.1),
+                          color: _getBadgeColor(code),
                           borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: AppColors.primary.withValues(alpha: 0.2)),
                         ),
                         child: Text(
                           code.toUpperCase(),
-                          style: AppTypography.labelSmall.copyWith(color: AppColors.primary, fontWeight: FontWeight.bold, fontSize: 10),
+                          style: AppTypography.labelSmall.copyWith(color: AppColors.white, fontWeight: FontWeight.bold, fontSize: 12),
                         ),
                       ),
                       Text(
                         price,
-                        style: AppTypography.priceTag.copyWith(color: AppColors.accent, fontSize: 14),
+                        style: AppTypography.priceTag.copyWith(color: AppColors.accent, fontSize: 16),
                       ),
                     ],
                   ),
-                  // Bottom Row: Item Name & Description
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        name,
-                        style: AppTypography.labelMedium.copyWith(color: AppColors.primary, fontSize: 13),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        description,
-                        style: AppTypography.bodySmall.copyWith(color: AppColors.secondary, fontSize: 11),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
+                  // Bottom Row: Item Name
+                  Text(
+                    name,
+                    style: AppTypography.labelMedium.copyWith(color: AppColors.primary, fontSize: 16, fontWeight: FontWeight.bold),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ],
               ),
