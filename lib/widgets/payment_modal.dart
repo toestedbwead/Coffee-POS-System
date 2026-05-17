@@ -25,7 +25,7 @@ class _PaymentModalDialogState extends State<PaymentModalDialog> {
   @override
   void initState() {
     super.initState();
-    // Default cash received to exact amount initially or 0
+    // Default cash received to exact amount initially
     cashReceived = widget.totalAmount;
     _cashController.text = cashReceived.toStringAsFixed(2);
   }
@@ -44,6 +44,53 @@ class _PaymentModalDialogState extends State<PaymentModalDialog> {
     });
   }
 
+  void _onNumpadTap(String value) {
+    setState(() {
+      if (value == 'C') {
+        cashReceived = 0.0;
+        _cashController.text = '0.00';
+      } else if (value == '⌫') {
+        String current = _cashController.text;
+        // If current is the default exact amount, clear it to 0
+        if (current == widget.totalAmount.toStringAsFixed(2)) {
+          cashReceived = 0.0;
+          _cashController.text = '0.00';
+          return;
+        }
+        if (current.isNotEmpty && current != '0.00') {
+          current = current.substring(0, current.length - 1);
+          if (current.isEmpty || current == '0.') {
+            current = '0.00';
+            cashReceived = 0.0;
+          } else {
+            cashReceived = double.tryParse(current) ?? 0.0;
+          }
+          _cashController.text = current;
+        }
+      } else if (value == 'Exact') {
+        cashReceived = widget.totalAmount;
+        _cashController.text = cashReceived.toStringAsFixed(2);
+      } else {
+        // Tapping numbers, 00, or dot
+        String current = _cashController.text;
+        if (current == '0.00' || current == '0' || current == widget.totalAmount.toStringAsFixed(2)) {
+          current = value == '.' ? '0.' : value;
+        } else {
+          // Prevent multiple decimals
+          if (value == '.' && current.contains('.')) return;
+          // Limit decimal places to 2
+          if (current.contains('.')) {
+            final parts = current.split('.');
+            if (parts.length > 1 && parts[1].length >= 2) return; // already 2 decimal places
+          }
+          current += value;
+        }
+        _cashController.text = current;
+        cashReceived = double.tryParse(current) ?? 0.0;
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final double changeDue = cashReceived - widget.totalAmount;
@@ -52,7 +99,7 @@ class _PaymentModalDialogState extends State<PaymentModalDialog> {
     return Dialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       child: Container(
-        width: 550,
+        width: 750, // Expanded width for beautiful 2-column Cash layout with Numpad
         padding: const EdgeInsets.all(28),
         child: SingleChildScrollView(
           child: Column(
@@ -130,79 +177,116 @@ class _PaymentModalDialogState extends State<PaymentModalDialog> {
 
               // Conditional Content based on Method
               if (selectedMethod == 'Cash') ...[
-                Text(
-                  'Cash Received',
-                  style: AppTypography.labelMedium,
-                ),
-                const SizedBox(height: 8),
-                TextField(
-                  controller: _cashController,
-                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                  style: AppTypography.h3.copyWith(color: AppColors.darkGray),
-                  decoration: InputDecoration(
-                    prefixText: '₱ ',
-                    prefixStyle: AppTypography.h3.copyWith(color: AppColors.primary),
-                    hintText: '0.00',
-                  ),
-                  onChanged: (value) {
-                    setState(() {
-                      cashReceived = double.tryParse(value) ?? 0.0;
-                    });
-                  },
-                ),
-                const SizedBox(height: 16),
-
-                // Quick Select Bills
-                Text(
-                  'Quick Select',
-                  style: AppTypography.labelSmall,
-                ),
-                const SizedBox(height: 8),
-                Wrap(
-                  spacing: 10,
-                  runSpacing: 10,
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _buildQuickBillButton('Exact', widget.totalAmount),
-                    _buildQuickBillButton('₱100', 100.0),
-                    _buildQuickBillButton('₱200', 200.0),
-                    _buildQuickBillButton('₱500', 500.0),
-                    _buildQuickBillButton('₱1000', 1000.0),
-                  ],
-                ),
-                const SizedBox(height: 28),
+                    // Left Column: Input, Quick Bills, Change Box
+                    Expanded(
+                      flex: 5,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Cash Received',
+                            style: AppTypography.labelMedium,
+                          ),
+                          const SizedBox(height: 8),
+                          TextField(
+                            controller: _cashController,
+                            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                            style: AppTypography.h3.copyWith(color: AppColors.darkGray, fontSize: 26),
+                            decoration: InputDecoration(
+                              prefixText: '₱ ',
+                              prefixStyle: AppTypography.h3.copyWith(color: AppColors.primary, fontSize: 26),
+                              hintText: '0.00',
+                            ),
+                            onChanged: (value) {
+                              setState(() {
+                                cashReceived = double.tryParse(value) ?? 0.0;
+                              });
+                            },
+                          ),
+                          const SizedBox(height: 16),
 
-                // Change Summary Box
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    color: isCashValid ? AppColors.success.withValues(alpha: 0.1) : AppColors.error.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: isCashValid ? AppColors.success.withValues(alpha: 0.5) : AppColors.error.withValues(alpha: 0.5),
-                      width: 2,
+                          // Quick Select Bills
+                          Text(
+                            'Quick Select Bills',
+                            style: AppTypography.labelSmall,
+                          ),
+                          const SizedBox(height: 8),
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 8,
+                            children: [
+                              _buildQuickBillButton('Exact', widget.totalAmount),
+                              _buildQuickBillButton('₱100', 100.0),
+                              _buildQuickBillButton('₱200', 200.0),
+                              _buildQuickBillButton('₱500', 500.0),
+                              _buildQuickBillButton('₱1000', 1000.0),
+                            ],
+                          ),
+                          const SizedBox(height: 28),
+
+                          // Change Summary Box
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.all(20),
+                            decoration: BoxDecoration(
+                              color: isCashValid ? AppColors.success.withValues(alpha: 0.1) : AppColors.error.withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: isCashValid ? AppColors.success.withValues(alpha: 0.5) : AppColors.error.withValues(alpha: 0.5),
+                                width: 2,
+                              ),
+                            ),
+                            child: Column(
+                              children: [
+                                Text(
+                                  isCashValid ? 'Change Due' : 'Insufficient Cash',
+                                  style: AppTypography.labelMedium.copyWith(
+                                    color: isCashValid ? AppColors.success : AppColors.error,
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  isCashValid
+                                      ? '₱${changeDue.toStringAsFixed(2)}'
+                                      : 'Need ₱${(widget.totalAmount - cashReceived).toStringAsFixed(2)} more',
+                                  style: AppTypography.h2.copyWith(
+                                    color: isCashValid ? AppColors.success : AppColors.error,
+                                    fontSize: isCashValid ? 32 : 20,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                  child: Column(
-                    children: [
-                      Text(
-                        isCashValid ? 'Change Due' : 'Insufficient Cash',
-                        style: AppTypography.labelMedium.copyWith(
-                          color: isCashValid ? AppColors.success : AppColors.error,
+                    const SizedBox(width: 28),
+                    // Right Column: On-Screen Touch Numpad
+                    Expanded(
+                      flex: 6,
+                      child: Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: AppColors.primary.withValues(alpha: 0.05),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: AppColors.primary.withValues(alpha: 0.2)),
+                        ),
+                        child: Column(
+                          children: [
+                            Text(
+                              'Touch Numpad',
+                              style: AppTypography.labelMedium,
+                            ),
+                            const SizedBox(height: 12),
+                            _buildNumpadGrid(),
+                          ],
                         ),
                       ),
-                      const SizedBox(height: 8),
-                      Text(
-                        isCashValid
-                            ? '₱${changeDue.toStringAsFixed(2)}'
-                            : 'Need ₱${(widget.totalAmount - cashReceived).toStringAsFixed(2)} more',
-                        style: AppTypography.h2.copyWith(
-                          color: isCashValid ? AppColors.success : AppColors.error,
-                          fontSize: isCashValid ? 32 : 20,
-                        ),
-                      ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ] else ...[
                 // e-Wallet Section
@@ -265,7 +349,7 @@ class _PaymentModalDialogState extends State<PaymentModalDialog> {
                   const SizedBox(width: 16),
                   LatteButton(
                     label: 'CONFIRM PAYMENT',
-                    width: 200,
+                    width: 220,
                     backgroundColor: (selectedMethod == 'Cash' && !isCashValid)
                         ? AppColors.mediumGray
                         : AppColors.success,
@@ -284,6 +368,67 @@ class _PaymentModalDialogState extends State<PaymentModalDialog> {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildNumpadGrid() {
+    final List<List<String>> rows = [
+      ['7', '8', '9', '⌫'],
+      ['4', '5', '6', 'C'],
+      ['1', '2', '3', '.'],
+      ['0', '00', 'Exact', ''],
+    ];
+
+    return Column(
+      children: rows.map((row) {
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 8.0),
+          child: Row(
+            children: row.map((btn) {
+              if (btn.isEmpty) {
+                return Expanded(child: const SizedBox());
+              }
+              return Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 4.0),
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: btn == 'C' || btn == '⌫'
+                          ? AppColors.secondary
+                          : btn == 'Exact'
+                              ? AppColors.accent
+                              : AppColors.white,
+                      foregroundColor: btn == 'C' || btn == '⌫' || btn == 'Exact'
+                          ? AppColors.white
+                          : AppColors.primary,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        side: BorderSide(
+                          color: btn == 'C' || btn == '⌫' || btn == 'Exact'
+                              ? Colors.transparent
+                              : AppColors.mediumGray.withValues(alpha: 0.3),
+                        ),
+                      ),
+                      elevation: btn == 'C' || btn == '⌫' || btn == 'Exact' ? 2 : 1,
+                    ),
+                    onPressed: () => _onNumpadTap(btn),
+                    child: Text(
+                      btn,
+                      style: AppTypography.h3.copyWith(
+                        color: btn == 'C' || btn == '⌫' || btn == 'Exact'
+                            ? AppColors.white
+                            : AppColors.primary,
+                        fontSize: btn == 'Exact' ? 18 : 22,
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+        );
+      }).toList(),
     );
   }
 
