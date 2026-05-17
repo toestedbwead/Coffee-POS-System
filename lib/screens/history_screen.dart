@@ -269,8 +269,9 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                       Container(
                         padding: const EdgeInsets.all(20),
                         decoration: BoxDecoration(
-                          color: AppColors.lightGray,
-                          borderRadius: BorderRadius.circular(12),
+                          color: AppColors.background,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: AppColors.primary.withValues(alpha: 0.15), width: 1.5),
                         ),
                         child: Column(
                           children: [
@@ -327,6 +328,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                 child: LatteButton(
                   label: 'CLOSE',
                   onPressed: () => Navigator.pop(context),
+                  backgroundColor: AppColors.primary,
                 ),
               ),
             ],
@@ -367,67 +369,112 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
     }).toList();
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Transaction History'),
-        centerTitle: true,
-      ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : Column(
-              children: [
-                // Dropdown Filters Row
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-                  decoration: BoxDecoration(
-                    color: AppColors.white,
-                    border: Border(bottom: BorderSide(color: AppColors.mediumGray.withValues(alpha: 0.2))),
-                  ),
-                  child: Row(
+      backgroundColor: AppColors.white,
+      body: SafeArea(
+        child: Column(
+          children: [
+            // MINIMALIST DESKTOP HEADER (Crema Background)
+            Container(
+              height: 80,
+              padding: const EdgeInsets.symmetric(horizontal: 28),
+              decoration: BoxDecoration(
+                color: AppColors.background,
+                border: Border(
+                  bottom: BorderSide(color: AppColors.primary.withValues(alpha: 0.15), width: 1),
+                ),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  // Left: Back Button & Title
+                  Row(
                     children: [
-                      _buildDropdownFilter(
-                        label: 'Date',
-                        icon: Icons.calendar_today,
-                        value: _dateFilter,
-                        items: ['All Time', 'Today', 'This Month'],
-                        onChanged: (val) { if (val != null) setState(() => _dateFilter = val); },
-                      ),
-                      const SizedBox(width: 20),
-                      _buildDropdownFilter(
-                        label: 'Method',
-                        icon: Icons.payment,
-                        value: _methodFilter,
-                        items: ['All Methods', 'Cash', 'e-Wallet'],
-                        onChanged: (val) { if (val != null) setState(() => _methodFilter = val); },
-                      ),
-                      const SizedBox(width: 20),
-                      _buildDropdownFilter(
-                        label: 'Status',
-                        icon: Icons.flag_outlined,
-                        value: _statusFilter,
-                        items: ['All Status', 'Completed', 'Voided'],
-                        onChanged: (val) { if (val != null) setState(() => _statusFilter = val); },
-                      ),
-                      const Spacer(),
-                      // Quick Reset Button
-                      if (_dateFilter != 'All Time' || _methodFilter != 'All Methods' || _statusFilter != 'All Status')
-                        TextButton.icon(
-                          icon: const Icon(Icons.refresh, color: AppColors.accent),
-                          label: Text('Reset Filters', style: AppTypography.labelMedium.copyWith(color: AppColors.accent)),
-                          onPressed: () {
-                            setState(() {
-                              _dateFilter = 'All Time';
-                              _methodFilter = 'All Methods';
-                              _statusFilter = 'All Status';
-                            });
-                          },
+                      OutlinedButton.icon(
+                        onPressed: () => Navigator.pop(context),
+                        icon: const Icon(Icons.arrow_back_rounded, size: 20, color: AppColors.primary),
+                        label: Text('Back to Cashier', style: AppTypography.labelMedium.copyWith(color: AppColors.primary)),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: AppColors.primary,
+                          side: BorderSide(color: AppColors.primary.withValues(alpha: 0.3), width: 1.5),
+                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                         ),
+                      ),
+                      const SizedBox(width: 24),
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: AppColors.primary,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Icon(Icons.history_rounded, color: AppColors.white, size: 24),
+                      ),
+                      const SizedBox(width: 16),
+                      Text(
+                        'Transaction History',
+                        style: AppTypography.h1.copyWith(color: AppColors.primary, fontSize: 24),
+                      ),
                     ],
                   ),
-                ),
+                ],
+              ),
+            ),
 
-                // Orders List
-                Expanded(
-                  child: filteredOrders.isEmpty
+            // Dropdown Filters Row (Crema Background)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 16),
+              decoration: BoxDecoration(
+                color: AppColors.background,
+                border: Border(bottom: BorderSide(color: AppColors.primary.withValues(alpha: 0.15), width: 1)),
+              ),
+              child: Row(
+                children: [
+                  _buildDropdownFilter(
+                    label: 'Date',
+                    icon: Icons.calendar_today,
+                    value: _dateFilter,
+                    items: ['All Time', 'Today', 'This Month'],
+                    onChanged: (val) { if (val != null) setState(() => _dateFilter = val); },
+                  ),
+                  const SizedBox(width: 20),
+                  _buildDropdownFilter(
+                    label: 'Method',
+                    icon: Icons.payment,
+                    value: _methodFilter,
+                    items: ['All Methods', 'Cash', 'e-Wallet'],
+                    onChanged: (val) { if (val != null) setState(() => _methodFilter = val); },
+                  ),
+                  const SizedBox(width: 20),
+                  _buildDropdownFilter(
+                    label: 'Status',
+                    icon: Icons.flag_outlined,
+                    value: _statusFilter,
+                    items: ['All Status', 'Completed', 'Voided'],
+                    onChanged: (val) { if (val != null) setState(() => _statusFilter = val); },
+                  ),
+                  const Spacer(),
+                  // Quick Reset Button
+                  if (_dateFilter != 'All Time' || _methodFilter != 'All Methods' || _statusFilter != 'All Status')
+                    TextButton.icon(
+                      icon: const Icon(Icons.refresh, color: AppColors.accent),
+                      label: Text('Reset Filters', style: AppTypography.labelMedium.copyWith(color: AppColors.accent)),
+                      onPressed: () {
+                        setState(() {
+                          _dateFilter = 'All Time';
+                          _methodFilter = 'All Methods';
+                          _statusFilter = 'All Status';
+                        });
+                      },
+                    ),
+                ],
+              ),
+            ),
+
+            // Orders List
+            Expanded(
+              child: _isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : filteredOrders.isEmpty
                       ? Center(
                           child: Text(
                             'No transactions match the selected filters.',
@@ -435,7 +482,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                           ),
                         )
                       : ListView.builder(
-                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                          padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 20),
                           itemCount: filteredOrders.length,
                           itemBuilder: (context, index) {
                             final order = filteredOrders[index];
@@ -444,12 +491,15 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
 
                             return Card(
                               margin: const EdgeInsets.only(bottom: 16),
+                              color: AppColors.background,
+                              elevation: 0,
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(16),
                                 side: BorderSide(
                                   color: isVoided
-                                      ? AppColors.error.withValues(alpha: 0.3)
-                                      : AppColors.mediumGray.withValues(alpha: 0.2),
+                                      ? AppColors.error.withValues(alpha: 0.4)
+                                      : AppColors.primary.withValues(alpha: 0.15),
+                                  width: 1.5,
                                 ),
                               ),
                               child: Padding(
@@ -466,7 +516,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                                         borderRadius: BorderRadius.circular(16),
                                       ),
                                       child: Icon(
-                                        isVoided ? Icons.block : Icons.receipt_long,
+                                        isVoided ? Icons.block : Icons.receipt_long_rounded,
                                         size: 32,
                                         color: isVoided ? AppColors.error : AppColors.primary,
                                       ),
@@ -517,7 +567,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                                           const SizedBox(height: 6),
                                           Text(
                                             'Date: ${DateTime.parse(order['timestamp'] as String).toLocal().toString().substring(0, 16)} • Paid via ${order['paymentMethod']}',
-                                            style: AppTypography.bodySmall,
+                                            style: AppTypography.bodySmall.copyWith(color: AppColors.secondary),
                                           ),
                                         ],
                                       ),
@@ -536,17 +586,29 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
 
                                     // Actions
                                     OutlinedButton.icon(
-                                      icon: const Icon(Icons.visibility),
+                                      icon: const Icon(Icons.visibility_rounded, size: 18),
                                       label: const Text('Details'),
+                                      style: OutlinedButton.styleFrom(
+                                        foregroundColor: AppColors.primary,
+                                        side: BorderSide(color: AppColors.primary.withValues(alpha: 0.3), width: 1.5),
+                                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                        textStyle: AppTypography.labelSmall,
+                                      ),
                                       onPressed: () => _showOrderDetails(order),
                                     ),
                                     if (!isVoided) ...[
                                       const SizedBox(width: 12),
                                       ElevatedButton.icon(
-                                        icon: const Icon(Icons.cancel_outlined),
+                                        icon: const Icon(Icons.cancel_outlined, size: 18),
                                         label: const Text('Void'),
                                         style: ElevatedButton.styleFrom(
                                           backgroundColor: AppColors.error,
+                                          foregroundColor: AppColors.white,
+                                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                          textStyle: AppTypography.labelSmall,
+                                          elevation: 0,
                                         ),
                                         onPressed: () => _voidOrder(order['id'] as String),
                                       ),
@@ -557,9 +619,10 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                             );
                           },
                         ),
-                ),
-              ],
             ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -573,9 +636,9 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
       decoration: BoxDecoration(
-        color: AppColors.background,
+        color: AppColors.white,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.mediumGray.withValues(alpha: 0.3)),
+        border: Border.all(color: AppColors.primary.withValues(alpha: 0.2), width: 1.5),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
