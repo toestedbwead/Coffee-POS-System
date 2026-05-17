@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:pdf/pdf.dart';
@@ -644,13 +645,19 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
       csv.writeln('${o["id"]},${o["timestamp"]},${o["subtotal"]},${o["taxAmount"]},${o["total"]},${o["paymentMethod"]},${o["status"]},$custName,$discount');
     }
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('CSV Export Generated: ${orders.length} transactions ready for QuickBooks / Excel.'),
-        backgroundColor: AppColors.success,
-        duration: const Duration(seconds: 4),
-      ),
-    );
+    final filename = '${orderProvider.storeName.replaceAll(" ", "_")}_Monthly_Accounting_${DateFormat('yyyyMMdd').format(DateTime.now())}.csv';
+    final bytes = utf8.encode(csv.toString());
+    await Printing.sharePdf(bytes: bytes, filename: filename);
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('CSV Export Generated: ${orders.length} transactions ready for QuickBooks / Excel.'),
+          backgroundColor: AppColors.success,
+          duration: const Duration(seconds: 4),
+        ),
+      );
+    }
   }
 
   // ==================== 3. SETTINGS TAB ====================
