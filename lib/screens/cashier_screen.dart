@@ -253,8 +253,12 @@ class _CashierScreenState extends State<CashierScreen> {
               ],
             ),
           ),
-          // DIVIDER
-          const VerticalDivider(width: 1),
+          // PREMIUM SUBTLE DIVIDER
+          VerticalDivider(
+            width: 1,
+            thickness: 1,
+            color: AppColors.primary.withValues(alpha: 0.15),
+          ),
 
           // CENTER COLUMN: Products Grid
           Expanded(
@@ -295,8 +299,12 @@ class _CashierScreenState extends State<CashierScreen> {
             ),
           ),
 
-          // DIVIDER
-          const VerticalDivider(width: 1),
+          // PREMIUM SUBTLE DIVIDER
+          VerticalDivider(
+            width: 1,
+            thickness: 1,
+            color: AppColors.primary.withValues(alpha: 0.15),
+          ),
 
           // RIGHT COLUMN: Order Summary
           Container(
