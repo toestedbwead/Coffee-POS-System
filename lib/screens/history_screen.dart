@@ -16,7 +16,11 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
   final DatabaseHelper _db = DatabaseHelper();
   List<Map<String, dynamic>> _orders = [];
   bool _isLoading = true;
-  String _searchQuery = '';
+  
+  // Touch-Friendly Filter States
+  String _dateFilter = 'All Time'; // 'Today', 'This Month', 'All Time'
+  String _methodFilter = 'All Methods'; // 'All Methods', 'Cash', 'e-Wallet'
+  String _statusFilter = 'All Status'; // 'All Status', 'Completed', 'Voided'
 
   @override
   void initState() {
@@ -325,11 +329,31 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
   @override
   Widget build(BuildContext context) {
     final filteredOrders = _orders.where((order) {
-      final id = order['id'].toString().toLowerCase();
+      final orderDate = DateTime.parse(order['timestamp'] as String).toLocal();
+      final now = DateTime.now();
+
+      // Date Filter
+      if (_dateFilter == 'Today') {
+        if (orderDate.year != now.year || orderDate.month != now.month || orderDate.day != now.day) {
+          return false;
+        }
+      } else if (_dateFilter == 'This Month') {
+        if (orderDate.year != now.year || orderDate.month != now.month) {
+          return false;
+        }
+      }
+
+      // Method Filter
       final method = order['paymentMethod'].toString().toLowerCase();
-      final status = order['status'].toString().toLowerCase();
-      final query = _searchQuery.toLowerCase();
-      return id.contains(query) || method.contains(query) || status.contains(query);
+      if (_methodFilter == 'Cash' && !method.contains('cash')) return false;
+      if (_methodFilter == 'e-Wallet' && !method.contains('e-wallet')) return false;
+
+      // Status Filter
+      final status = order['status'].toString();
+      if (_statusFilter == 'Completed' && status != 'Completed') return false;
+      if (_statusFilter == 'Voided' && status != 'Voided') return false;
+
+      return true;
     }).toList();
 
     return Scaffold(
@@ -341,20 +365,53 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
           ? const Center(child: CircularProgressIndicator())
           : Column(
               children: [
-                // Search Bar
-                Padding(
-                  padding: const EdgeInsets.all(20),
-                  child: TextField(
-                    style: AppTypography.bodyRegular,
-                    decoration: InputDecoration(
-                      hintText: 'Search by Order ID, Payment Method, or Status...',
-                      prefixIcon: const Icon(Icons.search, color: AppColors.primary),
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-                    ),
-                    onChanged: (value) {
-                      setState(() => _searchQuery = value);
-                    },
+                // Dropdown Filters Row
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                  decoration: BoxDecoration(
+                    color: AppColors.white,
+                    border: Border(bottom: BorderSide(color: AppColors.mediumGray.withValues(alpha: 0.2))),
+                  ),
+                  child: Row(
+                    children: [
+                      _buildDropdownFilter(
+                        label: 'Date',
+                        icon: Icons.calendar_today,
+                        value: _dateFilter,
+                        items: ['All Time', 'Today', 'This Month'],
+                        onChanged: (val) { if (val != null) setState(() => _dateFilter = val); },
+                      ),
+                      const SizedBox(width: 20),
+                      _buildDropdownFilter(
+                        label: 'Method',
+                        icon: Icons.payment,
+                        value: _methodFilter,
+                        items: ['All Methods', 'Cash', 'e-Wallet'],
+                        onChanged: (val) { if (val != null) setState(() => _methodFilter = val); },
+                      ),
+                      const SizedBox(width: 20),
+                      _buildDropdownFilter(
+                        label: 'Status',
+                        icon: Icons.flag_outlined,
+                        value: _statusFilter,
+                        items: ['All Status', 'Completed', 'Voided'],
+                        onChanged: (val) { if (val != null) setState(() => _statusFilter = val); },
+                      ),
+                      const Spacer(),
+                      // Quick Reset Button
+                      if (_dateFilter != 'All Time' || _methodFilter != 'All Methods' || _statusFilter != 'All Status')
+                        TextButton.icon(
+                          icon: const Icon(Icons.refresh, color: AppColors.accent),
+                          label: Text('Reset Filters', style: AppTypography.labelMedium.copyWith(color: AppColors.accent)),
+                          onPressed: () {
+                            setState(() {
+                              _dateFilter = 'All Time';
+                              _methodFilter = 'All Methods';
+                              _statusFilter = 'All Status';
+                            });
+                          },
+                        ),
+                    ],
                   ),
                 ),
 
@@ -363,12 +420,12 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                   child: filteredOrders.isEmpty
                       ? Center(
                           child: Text(
-                            'No transactions found.',
+                            'No transactions match the selected filters.',
                             style: AppTypography.bodyLarge.copyWith(color: AppColors.mediumGray),
                           ),
                         )
                       : ListView.builder(
-                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
                           itemCount: filteredOrders.length,
                           itemBuilder: (context, index) {
                             final order = filteredOrders[index];
@@ -495,4 +552,47 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
             ),
     );
   }
+
+  Widget _buildDropdownFilter({
+    required String label,
+    required IconData icon,
+    required String value,
+    required List<String> items,
+    required Function(String?) onChanged,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+      decoration: BoxDecoration(
+        color: AppColors.background,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.mediumGray.withValues(alpha: 0.3)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 20, color: AppColors.primary),
+          const SizedBox(width: 12),
+          Text('$label:', style: AppTypography.labelSmall.copyWith(color: AppColors.darkGray)),
+          const SizedBox(width: 8),
+          DropdownButtonHideUnderline(
+            child: DropdownButton<String>(
+              value: value,
+              icon: const Icon(Icons.arrow_drop_down, color: AppColors.primary),
+              style: AppTypography.labelMedium.copyWith(color: AppColors.primary),
+              dropdownColor: AppColors.white,
+              borderRadius: BorderRadius.circular(12),
+              items: items.map((item) {
+                return DropdownMenuItem<String>(
+                  value: item,
+                  child: Text(item),
+                );
+              }).toList(),
+              onChanged: onChanged,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
+
