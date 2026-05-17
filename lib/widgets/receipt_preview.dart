@@ -221,7 +221,6 @@ class ReceiptPreviewModal extends StatelessWidget {
                       icon: const Icon(Icons.download, size: 20),
                       label: const Text('SAVE PDF', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
                       onPressed: () async {
-                        Navigator.pop(context);
                         await _savePdfReceiptDirectly(context);
                       },
                     ),
@@ -240,7 +239,6 @@ class ReceiptPreviewModal extends StatelessWidget {
                       icon: const Icon(Icons.print, size: 20),
                       label: const Text('PRINT', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
                       onPressed: () async {
-                        Navigator.pop(context);
                         await _printPdfReceipt(context);
                       },
                     ),
