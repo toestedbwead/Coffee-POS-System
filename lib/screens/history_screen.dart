@@ -64,11 +64,6 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 16),
-                  Text(
-                    'Voiding a transaction requires an Admin PIN. Please enter your 4-digit PIN below (Default: 1234).',
-                    style: AppTypography.bodyRegular,
-                  ),
                   const SizedBox(height: 24),
                   TextField(
                     controller: pinController,

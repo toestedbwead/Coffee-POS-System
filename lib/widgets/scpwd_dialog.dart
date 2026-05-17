@@ -87,11 +87,6 @@ class _SCPWDInputDialogState extends State<SCPWDInputDialog> {
                   ),
                 ],
               ),
-              const SizedBox(height: 16),
-              Text(
-                'Please enter the Senior Citizen or PWD ID Number presented by the customer. By Philippine law, this grants a mandatory 20% discount and 100% VAT exemption.',
-                style: AppTypography.bodyRegular,
-              ),
               const SizedBox(height: 24),
               Text(
                 'ID Number',
@@ -128,10 +123,6 @@ class _SCPWDInputDialogState extends State<SCPWDInputDialog> {
                         Text(
                           'Touch Keyboard',
                           style: AppTypography.labelMedium,
-                        ),
-                        Text(
-                          'Quick Prefixes available below',
-                          style: AppTypography.labelSmall,
                         ),
                       ],
                     ),

@@ -80,11 +80,6 @@ class _CashierScreenState extends State<CashierScreen> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 16),
-                  Text(
-                    'Accessing the Admin Management Console requires authorization. Please enter your 4-digit Admin PIN below (Default: 1234).',
-                    style: AppTypography.bodyRegular,
-                  ),
                   const SizedBox(height: 24),
                   TextField(
                     controller: pinController,
@@ -213,7 +208,7 @@ class _CashierScreenState extends State<CashierScreen> {
                           ],
                         ),
                         const SizedBox(height: 2),
-                        Text('Premium Craft POS System', style: AppTypography.bodySmall.copyWith(color: AppColors.mediumGray, fontSize: 12)),
+                        Text('Coffee POS System', style: AppTypography.bodySmall.copyWith(color: AppColors.mediumGray, fontSize: 12)),
                       ],
                     ),
                   ],
@@ -568,11 +563,6 @@ class _ProductSelectionDialogState extends State<ProductSelectionDialog> {
               Text(
                 widget.product.name,
                 style: AppTypography.h2,
-              ),
-              const SizedBox(height: 8),
-              Text(
-                widget.product.description,
-                style: AppTypography.bodySmall,
               ),
               const SizedBox(height: 24),
 
