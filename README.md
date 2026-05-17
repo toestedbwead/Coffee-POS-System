@@ -105,9 +105,10 @@ Project Latte is a high-speed, offline-first Point of Sale (POS) system built wi
   - Product management (add/edit/delete)
 
 #### Phase 7: Advanced Features (Post-MVP)
-- [ ] Multi-terminal support (network syncing)
-- [ ] Customer loyalty program
-- [ ] Inventory tracking
+- [ ] Multi-terminal support (local socket syncing)
+- [ ] Customer loyalty program (points accumulation & redemption)
+- [ ] Real-time inventory tracking (ingredient-level COGS deductions)
+- [ ] Kitchen Display System (KDS) for cafe baristas
 - [ ] Staff management & performance tracking
 - [ ] SMS/Email receipt sending
 - [ ] Dark mode toggle
@@ -120,25 +121,26 @@ Project Latte is a high-speed, offline-first Point of Sale (POS) system built wi
 ```
 Project-Latte/
 ├── lib/
-│   ├── main.dart                 # App entry point
+│   ├── main.dart                 # App entry point & MultiProvider setup
 │   ├── theme/
 │   │   └── app_theme.dart        # Design system (colors, typography, themes)
 │   ├── widgets/
-│   │   └── latte_components.dart # Reusable UI components
+│   │   ├── latte_components.dart # Reusable UI components
+│   │   ├── payment_modal.dart    # Cash calculator & e-Wallet numpad
+│   │   ├── scpwd_dialog.dart     # BIR Tax Exemption verification
+│   │   └── receipt_preview.dart  # 80mm thermal paper preview & PDF dock
 │   ├── screens/
 │   │   ├── cashier_screen.dart   # Main 3-column POS interface
-│   │   ├── checkout_screen.dart  # (Phase 5)
-│   │   ├── admin_screen.dart     # (Phase 6)
-│   │   └── reports_screen.dart   # (Phase 6)
+│   │   ├── history_screen.dart   # Transaction auditing & PIN voiding
+│   │   └── admin_screen.dart     # Admin management console & sales charts
 │   ├── models/
-│   │   └── product_model.dart    # Data models (Product, Order, etc.)
+│   │   └── product_model.dart    # Data models (Product, Order, AddOn)
 │   ├── data/
-│   │   ├── mock_menu.dart        # Mock data for development
-│   │   └── database.dart         # (Phase 4) SQLite helper
+│   │   ├── mock_menu.dart        # 100% Complete Project Latte Menu
+│   │   └── database.dart         # SQLite FFI database helper
 │   ├── services/
-│   │   ├── tax_service.dart      # (Phase 4) PH tax calculations
-│   │   ├── printer_service.dart  # (Phase 5) ESC/POS printing
-│   │   └── order_service.dart    # (Phase 4) Order management
+│   │   ├── tax_service.dart      # Philippine tax calculations (VAT/SC/PWD)
+│   │   └── order_service.dart    # Order orchestration & persistence
 │   └── utils/
 │       └── constants.dart        # App-wide constants
 ├── pubspec.yaml                  # Dependencies
