@@ -1,13 +1,14 @@
+import 'package:flutter/material.dart';
 import '../models/product_model.dart';
 
 // Official Menu Categories
 final mockCategories = [
-  Category(id: 'c1', name: 'Hot Coffee', icon: '☕'),
-  Category(id: 'c2', name: 'Iced Coffee', icon: '❄️'),
-  Category(id: 'c3', name: 'Frappes', icon: '🥤'),
-  Category(id: 'c4', name: 'Teas & Sodas', icon: '🍹'),
-  Category(id: 'c5', name: 'Food & Snacks', icon: '🥐'),
-  Category(id: 'c6', name: 'Add-ons & Fees', icon: '➕'),
+  Category(id: 'c1', name: 'Hot Coffee', icon: Icons.coffee),
+  Category(id: 'c2', name: 'Iced Coffee', icon: Icons.ac_unit),
+  Category(id: 'c3', name: 'Frappes', icon: Icons.local_drink),
+  Category(id: 'c4', name: 'Teas & Sodas', icon: Icons.emoji_food_beverage),
+  Category(id: 'c5', name: 'Food & Snacks', icon: Icons.bakery_dining),
+  Category(id: 'c6', name: 'Add-ons & Fees', icon: Icons.extension),
 ];
 
 // Official Menu Add-ons

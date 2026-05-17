@@ -225,11 +225,12 @@ class _CashierScreenState extends State<CashierScreen> {
                             child: Column(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Text(
+                                Icon(
                                   category.icon,
-                                  style: const TextStyle(fontSize: 24),
+                                  size: 28,
+                                  color: isSelected ? AppColors.white : AppColors.primary,
                                 ),
-                                const SizedBox(height: 4),
+                                const SizedBox(height: 6),
                                 Text(
                                   category.name,
                                   style: AppTypography.labelSmall.copyWith(
