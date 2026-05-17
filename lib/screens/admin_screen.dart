@@ -50,6 +50,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
   // Menu Management State
   String _menuSearchQuery = '';
   String _menuCategoryFilter = 'All';
+  int _menuCurrentPage = 0;
 
   late final OrderProvider _orderProvider;
 
@@ -121,87 +122,136 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Admin Management Console'),
-        centerTitle: true,
-        actions: [
-          // Date Picker for Filtering Dashboard
-          if (_selectedTab == 0)
-            TextButton.icon(
-              icon: const Icon(Icons.calendar_today, color: AppColors.accent),
-              label: Text(
-                DateFormat('MMM dd, yyyy').format(_selectedDate),
-                style: AppTypography.labelMedium.copyWith(color: AppColors.accent),
-              ),
-              onPressed: () async {
-                final DateTime? picked = await showDatePicker(
-                  context: context,
-                  initialDate: _selectedDate,
-                  firstDate: DateTime(2025),
-                  lastDate: DateTime.now(),
-                );
-                if (picked != null && picked != _selectedDate) {
-                  setState(() => _selectedDate = picked);
-                  _loadDashboardData();
-                }
-              },
-            ),
-          const SizedBox(width: 16),
-        ],
-      ),
-      body: Row(
+      body: Column(
         children: [
-          // SIDEBAR NAVIGATION RAIL
+          // MINIMALIST DESKTOP HEADER (100% Consistent with CashierScreen & TransactionHistoryScreen)
           Container(
-            width: 250,
-            color: AppColors.white,
-            child: Column(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+            decoration: BoxDecoration(
+              color: AppColors.background,
+              border: Border(
+                bottom: BorderSide(color: AppColors.primary.withValues(alpha: 0.15), width: 1),
+              ),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const SizedBox(height: 24),
-                _buildSidebarItem(
-                  icon: Icons.analytics_outlined,
-                  label: 'Sales Analytics',
-                  index: 0,
+                // Left: Back Button & Title
+                Row(
+                  children: [
+                    OutlinedButton.icon(
+                      onPressed: () => Navigator.pop(context),
+                      icon: const Icon(Icons.arrow_back_rounded, size: 20, color: AppColors.primary),
+                      label: Text('Back to Cashier', style: AppTypography.labelMedium.copyWith(color: AppColors.primary)),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: AppColors.primary,
+                        side: BorderSide(color: AppColors.primary.withValues(alpha: 0.3), width: 1.5),
+                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                    ),
+                    const SizedBox(width: 24),
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: AppColors.primary,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Icon(Icons.admin_panel_settings_rounded, color: AppColors.white, size: 24),
+                    ),
+                    const SizedBox(width: 16),
+                    Text(
+                      'Admin Management Console',
+                      style: AppTypography.h1.copyWith(color: AppColors.primary, fontSize: 24),
+                    ),
+                  ],
                 ),
-                _buildSidebarItem(
-                  icon: Icons.download_outlined,
-                  label: 'Export & Reports',
-                  index: 1,
-                ),
-                _buildSidebarItem(
-                  icon: Icons.settings_outlined,
-                  label: 'System Settings',
-                  index: 2,
-                ),
-                _buildSidebarItem(
-                  icon: Icons.fastfood_outlined,
-                  label: 'Menu Management',
-                  index: 3,
-                ),
-                const Spacer(),
-                const Divider(),
-                Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.security, color: AppColors.success, size: 20),
-                      const SizedBox(width: 12),
-                      Text('Admin Mode', style: AppTypography.labelMedium.copyWith(color: AppColors.success)),
-                    ],
+                // Right: Date Picker for Filtering Dashboard (if Analytics tab)
+                if (_selectedTab == 0)
+                  Container(
+                    decoration: BoxDecoration(
+                      color: AppColors.white,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: AppColors.primary.withValues(alpha: 0.2)),
+                    ),
+                    child: TextButton.icon(
+                      icon: const Icon(Icons.calendar_today_rounded, color: AppColors.accent, size: 18),
+                      label: Text(
+                        DateFormat('MMM dd, yyyy').format(_selectedDate),
+                        style: AppTypography.labelMedium.copyWith(color: AppColors.accent),
+                      ),
+                      style: TextButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                      onPressed: () async {
+                        final DateTime? picked = await showDatePicker(
+                          context: context,
+                          initialDate: _selectedDate,
+                          firstDate: DateTime(2025),
+                          lastDate: DateTime.now(),
+                        );
+                        if (picked != null && picked != _selectedDate) {
+                          setState(() => _selectedDate = picked);
+                          _loadDashboardData();
+                        }
+                      },
+                    ),
                   ),
-                ),
-                const SizedBox(height: 12),
               ],
             ),
           ),
 
-          // MAIN CONTENT AREA
+          // MAIN WORKSPACE (Sidebar + Content)
           Expanded(
-            child: Container(
-              color: AppColors.background,
-              child: _isLoading
-                  ? const Center(child: CircularProgressIndicator())
-                  : _buildMainContent(),
+            child: Row(
+              children: [
+                // SIDEBAR NAVIGATION RAIL
+                Container(
+                  width: 250,
+                  decoration: BoxDecoration(
+                    color: AppColors.white,
+                    border: Border(
+                      right: BorderSide(color: AppColors.primary.withValues(alpha: 0.15), width: 1),
+                    ),
+                  ),
+                  child: Column(
+                    children: [
+                      const SizedBox(height: 24),
+                      _buildSidebarItem(
+                        icon: Icons.analytics_outlined,
+                        label: 'Sales Analytics',
+                        index: 0,
+                      ),
+                      _buildSidebarItem(
+                        icon: Icons.download_outlined,
+                        label: 'Export & Reports',
+                        index: 1,
+                      ),
+                      _buildSidebarItem(
+                        icon: Icons.settings_outlined,
+                        label: 'System Settings',
+                        index: 2,
+                      ),
+                      _buildSidebarItem(
+                        icon: Icons.fastfood_outlined,
+                        label: 'Menu Management',
+                        index: 3,
+                      ),
+                    ],
+                  ),
+                ),
+
+                // MAIN CONTENT AREA
+                Expanded(
+                  child: Container(
+                    color: AppColors.background,
+                    child: _isLoading
+                        ? const Center(child: CircularProgressIndicator())
+                        : _buildMainContent(),
+                  ),
+                ),
+              ],
             ),
           ),
         ],
@@ -270,8 +320,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text('Daily Sales Overview', style: AppTypography.h1),
-          const SizedBox(height: 8),
-          Text('Key performance indicators for ${DateFormat('MMMM dd, yyyy').format(_selectedDate)}', style: AppTypography.bodyRegular),
           const SizedBox(height: 24),
 
           // TOP STAT CARDS ROW (4 Main KPIs)
@@ -288,174 +336,170 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
           ),
           const SizedBox(height: 24),
 
-          // TENDER RECONCILIATION & CATEGORY ROW
+          // MAIN ANALYTICS WORKSPACE: TWO INDEPENDENT VERTICAL COLUMNS
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // TENDER BREAKDOWN CARD
+              // LEFT COLUMN (Flex: 3) - Tender Reconciliation + Hourly Revenue Trend
               Expanded(
                 flex: 3,
-                child: Container(
-                  padding: const EdgeInsets.all(24),
-                  decoration: BoxDecoration(
-                    color: AppColors.white,
-                    borderRadius: BorderRadius.circular(16),
-                    boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, 4))],
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('Cashier Tender Reconciliation', style: AppTypography.h2),
-                      const SizedBox(height: 8),
-                      Text('Physical drawer cash vs digital wallet / card transfers.', style: AppTypography.bodySmall.copyWith(color: AppColors.mediumGray)),
-                      const SizedBox(height: 24),
-                      Row(
+                child: Column(
+                  children: [
+                    // TENDER BREAKDOWN CARD
+                    Container(
+                      padding: const EdgeInsets.all(24),
+                      decoration: BoxDecoration(
+                        color: AppColors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, 4))],
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Expanded(child: _buildTenderBox('Cash Drawer', cashSales, Icons.money, AppColors.success)),
-                          const SizedBox(width: 16),
-                          Expanded(child: _buildTenderBox('E-Wallet (GCash/Maya)', ewalletSales, Icons.qr_code_scanner, AppColors.primary)),
-                          const SizedBox(width: 16),
-                          Expanded(child: _buildTenderBox('Credit / Debit Card', cardSales, Icons.credit_card, AppColors.accent)),
+                          Text('Cashier Tender Reconciliation', style: AppTypography.h2),
+                          const SizedBox(height: 24),
+                          Row(
+                            children: [
+                              Expanded(child: _buildTenderBox('Cash Drawer', cashSales, Icons.money, AppColors.success)),
+                              const SizedBox(width: 16),
+                              Expanded(child: _buildTenderBox('E-Wallet (GCash/Maya)', ewalletSales, Icons.qr_code_scanner, AppColors.primary)),
+                              const SizedBox(width: 16),
+                              Expanded(child: _buildTenderBox('Credit / Debit Card', cardSales, Icons.credit_card, AppColors.accent)),
+                            ],
+                          ),
                         ],
                       ),
-                    ],
-                  ),
+                    ),
+                    const SizedBox(height: 24),
+
+                    // HOURLY REVENUE TREND CHART
+                    Container(
+                      padding: const EdgeInsets.all(24),
+                      decoration: BoxDecoration(
+                        color: AppColors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, 4))],
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('Hourly Revenue Trend', style: AppTypography.h2),
+                          const SizedBox(height: 24),
+                          _buildCustomBarChart(),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
               ),
               const SizedBox(width: 24),
 
-              // CATEGORY BREAKDOWN CARD
+              // RIGHT COLUMN (Flex: 2) - Category Breakdown + Top Selling Products
               Expanded(
                 flex: 2,
-                child: Container(
-                  padding: const EdgeInsets.all(24),
-                  decoration: BoxDecoration(
-                    color: AppColors.white,
-                    borderRadius: BorderRadius.circular(16),
-                    boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, 4))],
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('Sales by Menu Category', style: AppTypography.h2),
-                      const SizedBox(height: 16),
-                      _categorySales.isEmpty
-                          ? Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 24),
-                              child: Center(child: Text('No category sales recorded.', style: AppTypography.bodyRegular)),
-                            )
-                          : ListView.separated(
-                              shrinkWrap: true,
-                              physics: const NeverScrollableScrollPhysics(),
-                              itemCount: _categorySales.length,
-                              separatorBuilder: (context, index) => const Divider(height: 16),
-                              itemBuilder: (context, index) {
-                                final item = _categorySales[index];
-                                final cat = item['category']?.toString() ?? 'Other';
-                                final qty = item['totalQuantity'] as int;
-                                final rev = item['totalRevenue'] as double;
-                                return Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
+                child: Column(
+                  children: [
+                    // CATEGORY BREAKDOWN CARD
+                    Container(
+                      padding: const EdgeInsets.all(24),
+                      decoration: BoxDecoration(
+                        color: AppColors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, 4))],
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('Sales by Menu Category', style: AppTypography.h2),
+                          const SizedBox(height: 16),
+                          _categorySales.isEmpty
+                              ? Padding(
+                                  padding: const EdgeInsets.symmetric(vertical: 24),
+                                  child: Center(child: Text('No category sales recorded.', style: AppTypography.bodyRegular)),
+                                )
+                              : ListView.separated(
+                                  shrinkWrap: true,
+                                  physics: const NeverScrollableScrollPhysics(),
+                                  itemCount: _categorySales.length,
+                                  separatorBuilder: (context, index) => const Divider(height: 16),
+                                  itemBuilder: (context, index) {
+                                    final item = _categorySales[index];
+                                    final cat = item['category']?.toString() ?? 'Other';
+                                    final qty = item['totalQuantity'] as int;
+                                    final rev = item['totalRevenue'] as double;
+                                    return Row(
+                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                       children: [
-                                        Text(cat, style: AppTypography.labelMedium),
-                                        Text('$qty items sold', style: AppTypography.bodySmall.copyWith(color: AppColors.mediumGray)),
+                                        Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Text(cat, style: AppTypography.labelMedium),
+                                            Text('$qty items sold', style: AppTypography.bodySmall.copyWith(color: AppColors.mediumGray)),
+                                          ],
+                                        ),
+                                        Text('₱${rev.toStringAsFixed(2)}', style: AppTypography.labelMedium.copyWith(fontWeight: FontWeight.bold)),
                                       ],
-                                    ),
-                                    Text('₱${rev.toStringAsFixed(2)}', style: AppTypography.labelMedium.copyWith(fontWeight: FontWeight.bold)),
-                                  ],
-                                );
-                              },
-                            ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 36),
+                                    );
+                                  },
+                                ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 24),
 
-          // CHARTS & TABLES ROW
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // HOURLY REVENUE TREND CHART
-              Expanded(
-                flex: 3,
-                child: Container(
-                  padding: const EdgeInsets.all(24),
-                  decoration: BoxDecoration(
-                    color: AppColors.white,
-                    borderRadius: BorderRadius.circular(16),
-                    boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, 4))],
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('Hourly Revenue Trend', style: AppTypography.h2),
-                      const SizedBox(height: 24),
-                      _buildCustomBarChart(),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(width: 24),
-
-              // TOP SELLING PRODUCTS TABLE
-              Expanded(
-                flex: 2,
-                child: Container(
-                  padding: const EdgeInsets.all(24),
-                  decoration: BoxDecoration(
-                    color: AppColors.white,
-                    borderRadius: BorderRadius.circular(16),
-                    boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, 4))],
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('Top Selling Items', style: AppTypography.h2),
-                      const SizedBox(height: 16),
-                      _topProducts.isEmpty
-                          ? Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 32),
-                              child: Center(child: Text('No item sales recorded today.', style: AppTypography.bodyRegular)),
-                            )
-                          : ListView.separated(
-                              shrinkWrap: true,
-                              physics: const NeverScrollableScrollPhysics(),
-                              itemCount: _topProducts.length,
-                              separatorBuilder: (context, index) => const Divider(),
-                              itemBuilder: (context, index) {
-                                final item = _topProducts[index];
-                                final name = item['productName'] as String;
-                                final qty = item['totalQuantity'] as int;
-                                final rev = item['totalRevenue'] as double;
-                                return Row(
-                                  children: [
-                                    CircleAvatar(
-                                      backgroundColor: AppColors.primary.withValues(alpha: 0.1),
-                                      child: Text('${index + 1}', style: AppTypography.labelMedium.copyWith(color: AppColors.primary)),
-                                    ),
-                                    const SizedBox(width: 16),
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        children: [
-                                          Text(name, style: AppTypography.labelMedium),
-                                          Text('$qty units sold', style: AppTypography.bodySmall.copyWith(color: AppColors.mediumGray)),
-                                        ],
-                                      ),
-                                    ),
-                                    Text('₱${rev.toStringAsFixed(2)}', style: AppTypography.labelMedium.copyWith(fontWeight: FontWeight.bold)),
-                                  ],
-                                );
-                              },
-                            ),
-                    ],
-                  ),
+                    // TOP SELLING PRODUCTS TABLE
+                    Container(
+                      padding: const EdgeInsets.all(24),
+                      decoration: BoxDecoration(
+                        color: AppColors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, 4))],
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('Top Selling Items', style: AppTypography.h2),
+                          const SizedBox(height: 16),
+                          _topProducts.isEmpty
+                              ? Padding(
+                                  padding: const EdgeInsets.symmetric(vertical: 32),
+                                  child: Center(child: Text('No item sales recorded today.', style: AppTypography.bodyRegular)),
+                                )
+                              : ListView.separated(
+                                  shrinkWrap: true,
+                                  physics: const NeverScrollableScrollPhysics(),
+                                  itemCount: _topProducts.length,
+                                  separatorBuilder: (context, index) => const Divider(),
+                                  itemBuilder: (context, index) {
+                                    final item = _topProducts[index];
+                                    final name = item['productName'] as String;
+                                    final qty = item['totalQuantity'] as int;
+                                    final rev = item['totalRevenue'] as double;
+                                    return Row(
+                                      children: [
+                                        CircleAvatar(
+                                          backgroundColor: AppColors.primary.withValues(alpha: 0.1),
+                                          child: Text('${index + 1}', style: AppTypography.labelMedium.copyWith(color: AppColors.primary)),
+                                        ),
+                                        const SizedBox(width: 16),
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: [
+                                              Text(name, style: AppTypography.labelMedium),
+                                              Text('$qty units sold', style: AppTypography.bodySmall.copyWith(color: AppColors.mediumGray)),
+                                            ],
+                                          ),
+                                        ),
+                                        Text('₱${rev.toStringAsFixed(2)}', style: AppTypography.labelMedium.copyWith(fontWeight: FontWeight.bold)),
+                                      ],
+                                    );
+                                  },
+                                ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],
@@ -538,7 +582,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
     }
 
     return SizedBox(
-      height: 280,
+      height: 360, // Increased height for magnificent vertical breathing room!
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
         child: SizedBox(
@@ -551,7 +595,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: displayHours.map((hour) {
                     final double revenue = hourlyRevenueMap[hour] ?? 0.0;
-                    final double heightFactor = revenue / maxRevenue;
+                    // Implement a beautiful 15% floor for active hours so smaller sales aren't flattened!
+                    final double heightFactor = revenue > 0 ? (0.15 + 0.85 * (revenue / maxRevenue)) : 0.0;
 
                     return Tooltip(
                       message: 'Time: ${hour.toString().padLeft(2, '0')}:00\nRevenue: ₱${revenue.toStringAsFixed(2)}',
@@ -566,7 +611,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
                           AnimatedContainer(
                             duration: const Duration(milliseconds: 500),
                             width: 20,
-                            height: 200 * heightFactor,
+                            height: 280 * heightFactor, // Increased max bar height!
                             decoration: BoxDecoration(
                               color: revenue > 0 ? AppColors.primary : AppColors.mediumGray.withValues(alpha: 0.2),
                               borderRadius: const BorderRadius.only(topLeft: Radius.circular(6), topRight: Radius.circular(6)),
@@ -609,8 +654,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text('Export & Accounting Reports', style: AppTypography.h1),
-          const SizedBox(height: 8),
-          Text('Generate tax-compliant summaries, accounting spreadsheets, and inventory reconciliation logs.', style: AppTypography.bodyRegular),
           const SizedBox(height: 32),
 
           // REPORT FILTER BAR
@@ -734,74 +777,78 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
           ),
           const SizedBox(height: 36),
 
-          Row(
-            children: [
-              Expanded(
-                child: _buildExportCard(
+          // EXPORT FILES LIST
+          Card(
+            color: AppColors.white,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            child: ListView(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              children: [
+                _buildExportListTile(
                   title: 'Daily Sales Report (PDF)',
-                  description: 'Detailed breakdown of today\'s transactions, Net Revenue, VAT, SC/PWD discounts, and cashier tender reconciliation.',
+                  description: 'Official PDF financial summary.',
                   icon: Icons.picture_as_pdf,
                   color: AppColors.primary,
                   onExport: () => _exportSummaryPdf('Daily'),
                 ),
-              ),
-              const SizedBox(width: 24),
-              Expanded(
-                child: _buildExportCard(
+                Divider(height: 1, color: AppColors.mediumGray.withValues(alpha: 0.2)),
+                _buildExportListTile(
                   title: 'Filtered Accounting (CSV)',
-                  description: 'Spreadsheet of transactions matching your selected Date Range, Payment Method, and Status criteria.',
+                  description: 'Filtered transaction spreadsheet.',
                   icon: Icons.table_chart,
                   color: AppColors.success,
                   onExport: _exportMonthlyCsv,
                 ),
-              ),
-              const SizedBox(width: 24),
-              Expanded(
-                child: _buildExportCard(
+                Divider(height: 1, color: AppColors.mediumGray.withValues(alpha: 0.2)),
+                _buildExportListTile(
                   title: 'Filtered Inventory (CSV)',
-                  description: 'Granular spreadsheet of individual items sold matching your selected Date Range and Status criteria.',
+                  description: 'Filtered itemized inventory.',
                   icon: Icons.inventory,
                   color: AppColors.accent,
                   onExport: _exportItemizedCsv,
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildExportCard({required String title, required String description, required IconData icon, required Color color, required VoidCallback onExport}) {
-    return Container(
-      padding: const EdgeInsets.all(32),
-      decoration: BoxDecoration(
-        color: AppColors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, 4))],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+  Widget _buildExportListTile({required String title, required String description, required IconData icon, required Color color, required VoidCallback onExport}) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 20),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(color: color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(16)),
-            child: Icon(icon, color: color, size: 36),
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(color: color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(12)),
+                child: Icon(icon, color: color, size: 28),
+              ),
+              const SizedBox(width: 20),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(title, style: AppTypography.labelMedium.copyWith(fontSize: 18, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 4),
+                  Text(description, style: AppTypography.bodySmall.copyWith(color: AppColors.mediumGray)),
+                ],
+              ),
+            ],
           ),
-          const SizedBox(height: 24),
-          Text(title, style: AppTypography.h2),
-          const SizedBox(height: 12),
-          Text(description, style: AppTypography.bodyRegular.copyWith(color: AppColors.mediumGray)),
-          const SizedBox(height: 32),
           ElevatedButton.icon(
             style: ElevatedButton.styleFrom(
               backgroundColor: color,
               foregroundColor: AppColors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 18),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
             ),
-            icon: const Icon(Icons.download, size: 20),
-            label: const Text('GENERATE EXPORT', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
+            icon: const Icon(Icons.download, size: 18),
+            label: const Text('GENERATE', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
             onPressed: onExport,
           ),
         ],
@@ -1036,8 +1083,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text('System Configuration', style: AppTypography.h1),
-          const SizedBox(height: 8),
-          Text('Configure shop credentials, tax rates, and hardware peripherals.', style: AppTypography.bodyRegular),
           const SizedBox(height: 32),
 
           Container(
@@ -1190,6 +1235,17 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
       return matchesSearch && matchesCategory;
     }).toList();
 
+    // PAGINATION LOGIC (10 items per page)
+    final int itemsPerPage = 10;
+    final int totalItems = filteredProducts.length;
+    final int totalPages = (totalItems / itemsPerPage).ceil();
+    if (_menuCurrentPage >= totalPages && totalPages > 0) {
+      _menuCurrentPage = totalPages - 1;
+    }
+    final int startIndex = _menuCurrentPage * itemsPerPage;
+    final int endIndex = (startIndex + itemsPerPage > totalItems) ? totalItems : (startIndex + itemsPerPage);
+    final paginatedProducts = filteredProducts.sublist(startIndex, endIndex);
+
     return SingleChildScrollView(
       padding: const EdgeInsets.all(32),
       child: Column(
@@ -1202,8 +1258,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text('Menu & Product Management', style: AppTypography.h1),
-                  const SizedBox(height: 8),
-                  Text('Add, edit, delete, and toggle real-time availability of cafe products', style: AppTypography.bodyRegular),
                 ],
               ),
               ElevatedButton.icon(
@@ -1228,13 +1282,13 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
                 child: TextField(
                   style: AppTypography.bodyRegular,
                   decoration: InputDecoration(
-                    hintText: 'Search products by name or description...',
+                    hintText: 'Search menu...',
                     prefixIcon: const Icon(Icons.search, color: AppColors.mediumGray),
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: AppColors.mediumGray.withValues(alpha: 0.3))),
                     enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: AppColors.mediumGray.withValues(alpha: 0.3))),
                     focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppColors.primary, width: 2)),
                   ),
-                  onChanged: (val) => setState(() => _menuSearchQuery = val),
+                  onChanged: (val) => setState(() { _menuSearchQuery = val; _menuCurrentPage = 0; }),
                 ),
               ),
               const SizedBox(width: 16),
@@ -1262,7 +1316,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
                         DropdownMenuItem(value: 'c6', child: Text('Food & Snacks')),
                       ],
                       onChanged: (val) {
-                        if (val != null) setState(() => _menuCategoryFilter = val);
+                        if (val != null) setState(() { _menuCategoryFilter = val; _menuCurrentPage = 0; });
                       },
                     ),
                   ),
@@ -1272,17 +1326,100 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
           ),
           const SizedBox(height: 24),
 
-          // Products Table / List View
+          // TOP PAGINATION BAR (Wrapped in Wrap with horizontal scroll protection!)
+          if (totalPages > 1) ...[
+            Wrap(
+              alignment: WrapAlignment.spaceBetween,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              spacing: 16,
+              runSpacing: 12,
+              children: [
+                Text(
+                  'Showing ${startIndex + 1} to $endIndex of $totalItems products',
+                  style: AppTypography.bodySmall.copyWith(color: AppColors.mediumGray),
+                ),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // PREVIOUS BUTTON
+                    OutlinedButton.icon(
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        side: BorderSide(color: _menuCurrentPage > 0 ? AppColors.primary : AppColors.mediumGray.withValues(alpha: 0.3)),
+                      ),
+                      icon: Icon(Icons.chevron_left, size: 18, color: _menuCurrentPage > 0 ? AppColors.primary : AppColors.mediumGray),
+                      label: Text('Prev', style: TextStyle(color: _menuCurrentPage > 0 ? AppColors.primary : AppColors.mediumGray, fontWeight: FontWeight.bold)),
+                      onPressed: _menuCurrentPage > 0 ? () => setState(() => _menuCurrentPage--) : null,
+                    ),
+                    const SizedBox(width: 12),
+
+                    // PAGE NUMBERS (Wrapped in Flexible/SingleChildScrollView to NEVER overflow!)
+                    Flexible(
+                      child: SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: Row(
+                          children: List.generate(totalPages, (index) {
+                            final bool isSelected = index == _menuCurrentPage;
+                            return Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 4),
+                              child: InkWell(
+                                onTap: () => setState(() => _menuCurrentPage = index),
+                                borderRadius: BorderRadius.circular(8),
+                                child: Container(
+                                  width: 36,
+                                  height: 36,
+                                  alignment: Alignment.center,
+                                  decoration: BoxDecoration(
+                                    color: isSelected ? AppColors.primary : AppColors.white,
+                                    borderRadius: BorderRadius.circular(8),
+                                    border: Border.all(color: isSelected ? AppColors.primary : AppColors.mediumGray.withValues(alpha: 0.3)),
+                                  ),
+                                  child: Text(
+                                    '${index + 1}',
+                                    style: AppTypography.labelMedium.copyWith(
+                                      color: isSelected ? AppColors.white : AppColors.darkGray,
+                                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            );
+                          }),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+
+                    // NEXT BUTTON
+                    OutlinedButton.icon(
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        side: BorderSide(color: _menuCurrentPage < totalPages - 1 ? AppColors.primary : AppColors.mediumGray.withValues(alpha: 0.3)),
+                      ),
+                      icon: Icon(Icons.chevron_right, size: 18, color: _menuCurrentPage < totalPages - 1 ? AppColors.primary : AppColors.mediumGray),
+                      label: Text('Next', style: TextStyle(color: _menuCurrentPage < totalPages - 1 ? AppColors.primary : AppColors.mediumGray, fontWeight: FontWeight.bold)),
+                      onPressed: _menuCurrentPage < totalPages - 1 ? () => setState(() => _menuCurrentPage++) : null,
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+          ],
+
+          // Products Table / List View (Paginated)
           Card(
             color: AppColors.white,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
             child: ListView.separated(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
-              itemCount: filteredProducts.length,
+              itemCount: paginatedProducts.length,
               separatorBuilder: (context, index) => Divider(height: 1, color: AppColors.mediumGray.withValues(alpha: 0.2)),
               itemBuilder: (context, index) {
-                final product = filteredProducts[index];
+                final product = paginatedProducts[index];
                 final categoryNames = {
                   'c1': 'Hot Coffee', 'c2': 'Iced Coffee', 'c3': 'Non-Coffee',
                   'c4': 'Frappes', 'c5': 'Refreshers', 'c6': 'Food & Snacks',
