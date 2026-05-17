@@ -21,6 +21,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
   String _dateFilter = 'All Time'; // 'Today', 'This Month', 'All Time'
   String _methodFilter = 'All Methods'; // 'All Methods', 'Cash', 'e-Wallet'
   String _statusFilter = 'All Status'; // 'All Status', 'Completed', 'Voided'
+  int _currentPage = 0;
 
   @override
   void initState() {
@@ -415,74 +416,164 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
               ),
             ),
 
-            // Dropdown Filters Row (Crema Background)
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 16),
-              decoration: BoxDecoration(
-                color: AppColors.background,
-                border: Border(bottom: BorderSide(color: AppColors.primary.withValues(alpha: 0.15), width: 1)),
-              ),
-              child: Row(
-                children: [
-                  _buildDropdownFilter(
-                    label: 'Date',
-                    icon: Icons.calendar_today,
-                    value: _dateFilter,
-                    items: ['All Time', 'Today', 'This Month'],
-                    onChanged: (val) { if (val != null) setState(() => _dateFilter = val); },
-                  ),
-                  const SizedBox(width: 20),
-                  _buildDropdownFilter(
-                    label: 'Method',
-                    icon: Icons.payment,
-                    value: _methodFilter,
-                    items: ['All Methods', 'Cash', 'e-Wallet'],
-                    onChanged: (val) { if (val != null) setState(() => _methodFilter = val); },
-                  ),
-                  const SizedBox(width: 20),
-                  _buildDropdownFilter(
-                    label: 'Status',
-                    icon: Icons.flag_outlined,
-                    value: _statusFilter,
-                    items: ['All Status', 'Completed', 'Voided'],
-                    onChanged: (val) { if (val != null) setState(() => _statusFilter = val); },
-                  ),
-                  const Spacer(),
-                  // Quick Reset Button
-                  if (_dateFilter != 'All Time' || _methodFilter != 'All Methods' || _statusFilter != 'All Status')
-                    TextButton.icon(
-                      icon: const Icon(Icons.refresh, color: AppColors.accent),
-                      label: Text('Reset Filters', style: AppTypography.labelMedium.copyWith(color: AppColors.accent)),
-                      onPressed: () {
-                        setState(() {
-                          _dateFilter = 'All Time';
-                          _methodFilter = 'All Methods';
-                          _statusFilter = 'All Status';
-                        });
-                      },
-                    ),
-                ],
-              ),
-            ),
+            // PAGINATION LOGIC (10 items per page)
+            ...(() {
+              final int itemsPerPage = 10;
+              final int totalItems = filteredOrders.length;
+              final int totalPages = (totalItems / itemsPerPage).ceil();
+              if (_currentPage >= totalPages && totalPages > 0) {
+                _currentPage = totalPages - 1;
+              }
+              final int startIndex = _currentPage * itemsPerPage;
+              final int endIndex = (startIndex + itemsPerPage > totalItems) ? totalItems : (startIndex + itemsPerPage);
+              final paginatedOrders = filteredOrders.sublist(startIndex, endIndex);
 
-            // Orders List
-            Expanded(
-              child: _isLoading
-                  ? const Center(child: CircularProgressIndicator())
-                  : filteredOrders.isEmpty
-                      ? Center(
-                          child: Text(
-                            'No transactions match the selected filters.',
-                            style: AppTypography.bodyLarge.copyWith(color: AppColors.mediumGray),
-                          ),
-                        )
-                      : ListView.builder(
-                          padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 20),
-                          itemCount: filteredOrders.length,
-                          itemBuilder: (context, index) {
-                            final order = filteredOrders[index];
-                            final bool isVoided = order['status'] == 'Voided';
-                            final bool scPwdApplied = (order['scPwdApplied'] as int?) == 1;
+              return [
+                // MASTER FILTERS & PAGINATION BAR (Crema Background)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 16),
+                  decoration: BoxDecoration(
+                    color: AppColors.background,
+                    border: Border(bottom: BorderSide(color: AppColors.primary.withValues(alpha: 0.15), width: 1)),
+                  ),
+                  child: Row(
+                    children: [
+                      _buildDropdownFilter(
+                        label: 'Date',
+                        icon: Icons.calendar_today,
+                        value: _dateFilter,
+                        items: ['All Time', 'Today', 'This Month'],
+                        onChanged: (val) { if (val != null) setState(() { _dateFilter = val; _currentPage = 0; }); },
+                      ),
+                      const SizedBox(width: 16),
+                      _buildDropdownFilter(
+                        label: 'Method',
+                        icon: Icons.payment,
+                        value: _methodFilter,
+                        items: ['All Methods', 'Cash', 'e-Wallet'],
+                        onChanged: (val) { if (val != null) setState(() { _methodFilter = val; _currentPage = 0; }); },
+                      ),
+                      const SizedBox(width: 16),
+                      _buildDropdownFilter(
+                        label: 'Status',
+                        icon: Icons.flag_outlined,
+                        value: _statusFilter,
+                        items: ['All Status', 'Completed', 'Voided'],
+                        onChanged: (val) { if (val != null) setState(() { _statusFilter = val; _currentPage = 0; }); },
+                      ),
+                      if (_dateFilter != 'All Time' || _methodFilter != 'All Methods' || _statusFilter != 'All Status') ...[
+                        const SizedBox(width: 8),
+                        IconButton(
+                          icon: const Icon(Icons.refresh, color: AppColors.accent),
+                          tooltip: 'Reset Filters',
+                          onPressed: () {
+                            setState(() {
+                              _dateFilter = 'All Time';
+                              _methodFilter = 'All Methods';
+                              _statusFilter = 'All Status';
+                              _currentPage = 0;
+                            });
+                          },
+                        ),
+                      ],
+
+                      const Spacer(),
+
+                      // PAGINATION CONTROLS BESIDE FILTERS
+                      if (totalPages > 1)
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              '${startIndex + 1}-$endIndex of $totalItems',
+                              style: AppTypography.bodySmall.copyWith(color: AppColors.mediumGray, fontWeight: FontWeight.bold),
+                            ),
+                            const SizedBox(width: 16),
+                            // PREVIOUS BUTTON
+                            OutlinedButton.icon(
+                              style: OutlinedButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                side: BorderSide(color: _currentPage > 0 ? AppColors.primary : AppColors.mediumGray.withValues(alpha: 0.3)),
+                              ),
+                              icon: Icon(Icons.chevron_left, size: 18, color: _currentPage > 0 ? AppColors.primary : AppColors.mediumGray),
+                              label: Text('Prev', style: TextStyle(color: _currentPage > 0 ? AppColors.primary : AppColors.mediumGray, fontWeight: FontWeight.bold)),
+                              onPressed: _currentPage > 0 ? () => setState(() => _currentPage--) : null,
+                            ),
+                            const SizedBox(width: 8),
+
+                            // PAGE NUMBERS (Wrapped in Flexible/SingleChildScrollView to NEVER overflow!)
+                            Flexible(
+                              child: SingleChildScrollView(
+                                scrollDirection: Axis.horizontal,
+                                child: Row(
+                                  children: List.generate(totalPages, (index) {
+                                    final bool isSelected = index == _currentPage;
+                                    return Padding(
+                                      padding: const EdgeInsets.symmetric(horizontal: 4),
+                                      child: InkWell(
+                                        onTap: () => setState(() => _currentPage = index),
+                                        borderRadius: BorderRadius.circular(8),
+                                        child: Container(
+                                          width: 36,
+                                          height: 36,
+                                          alignment: Alignment.center,
+                                          decoration: BoxDecoration(
+                                            color: isSelected ? AppColors.primary : AppColors.white,
+                                            borderRadius: BorderRadius.circular(8),
+                                            border: Border.all(color: isSelected ? AppColors.primary : AppColors.mediumGray.withValues(alpha: 0.3)),
+                                          ),
+                                          child: Text(
+                                            '${index + 1}',
+                                            style: AppTypography.labelMedium.copyWith(
+                                              color: isSelected ? AppColors.white : AppColors.darkGray,
+                                              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    );
+                                  }),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+
+                            // NEXT BUTTON
+                            OutlinedButton.icon(
+                              style: OutlinedButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                side: BorderSide(color: _currentPage < totalPages - 1 ? AppColors.primary : AppColors.mediumGray.withValues(alpha: 0.3)),
+                              ),
+                              icon: Icon(Icons.chevron_right, size: 18, color: _currentPage < totalPages - 1 ? AppColors.primary : AppColors.mediumGray),
+                              label: Text('Next', style: TextStyle(color: _currentPage < totalPages - 1 ? AppColors.primary : AppColors.mediumGray, fontWeight: FontWeight.bold)),
+                              onPressed: _currentPage < totalPages - 1 ? () => setState(() => _currentPage++) : null,
+                            ),
+                          ],
+                        ),
+                    ],
+                  ),
+                ),
+
+                // Orders List
+                Expanded(
+                  child: _isLoading
+                      ? const Center(child: CircularProgressIndicator())
+                      : paginatedOrders.isEmpty
+                          ? Center(
+                              child: Text(
+                                'No transactions match the selected filters.',
+                                style: AppTypography.bodyLarge.copyWith(color: AppColors.mediumGray),
+                              ),
+                            )
+                          : ListView.builder(
+                              padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 20),
+                              itemCount: paginatedOrders.length,
+                              itemBuilder: (context, index) {
+                                final order = paginatedOrders[index];
+                                final bool isVoided = order['status'] == 'Voided';
+                                final bool scPwdApplied = (order['scPwdApplied'] as int?) == 1;
 
                             return Card(
                               margin: const EdgeInsets.only(bottom: 16),
@@ -615,10 +706,12 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                           },
                         ),
             ),
-          ],
-        ),
-      ),
-    );
+          ];
+        })(),
+      ],
+    ),
+  ),
+);
   }
 
   Widget _buildDropdownFilter({
