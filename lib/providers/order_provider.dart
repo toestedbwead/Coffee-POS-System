@@ -10,16 +10,29 @@ class OrderProvider with ChangeNotifier {
   List<OrderItem> _items = [];
   bool _applySCPWD = false;
   String? _scPwdID;
+
+  // Store & Compliance Settings State
+  String _storeName = 'PROJECT LATTE COFFEE';
+  String _storeAddress = '123 Coffee Street, Diliman, Quezon City';
+  String _tin = '123-456-789-00000';
+  double _vatRate = 0.12;
+  double _pwdDiscount = 0.20;
+
   List<OrderItem> get items => _items;
   bool get applySCPWD => _applySCPWD;
   String? get scPwdID => _scPwdID;
   List<Product> get menuProducts => mockProducts;
+  String get storeName => _storeName;
+  String get storeAddress => _storeAddress;
+  String get tin => _tin;
+  double get vatRate => _vatRate;
+  double get pwdDiscount => _pwdDiscount;
 
   // Calculation Getters using TaxService
   double get subtotal => _items.fold(0, (sum, item) => sum + item.getTotal());
   
   Map<String, dynamic> get taxBreakdown => 
-      TaxService.getReceiptBreakdown(subtotal, applySCPWD: _applySCPWD);
+      TaxService.getReceiptBreakdown(subtotal, applySCPWD: _applySCPWD, vatRate: _vatRate, pwdDiscount: _pwdDiscount);
 
   double get vat => taxBreakdown['vat'] as double;
   double get total => taxBreakdown['totalAmount'] as double;
@@ -115,6 +128,22 @@ class OrderProvider with ChangeNotifier {
 
   void deleteProduct(String productId) {
     mockProducts.removeWhere((p) => p.id == productId);
+    notifyListeners();
+  }
+
+  // Store Settings Actions
+  void updateStoreSettings({
+    required String name,
+    required String address,
+    required String tinNum,
+    required double vat,
+    required double pwd,
+  }) {
+    _storeName = name;
+    _storeAddress = address;
+    _tin = tinNum;
+    _vatRate = vat;
+    _pwdDiscount = pwd;
     notifyListeners();
   }
 }

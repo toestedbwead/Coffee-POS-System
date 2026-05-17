@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
+import 'package:provider/provider.dart';
 import '../models/product_model.dart';
+import '../providers/order_provider.dart';
 import '../theme/app_theme.dart';
 
 
@@ -18,6 +20,7 @@ class ReceiptPreviewModal extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final orderProvider = context.watch<OrderProvider>();
     final String timestampStr = order.timestamp.toLocal().toString().substring(0, 16);
     final String orNumber = 'OR# ${order.id.substring(0, 12).toUpperCase()}';
 
@@ -47,15 +50,15 @@ class ReceiptPreviewModal extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     // Store Header
-                    const Text(
-                      'PROJECT LATTE COFFEE',
-                      style: TextStyle(fontFamily: 'Courier', fontSize: 22, fontWeight: FontWeight.bold, color: Colors.black),
+                    Text(
+                      orderProvider.storeName,
+                      style: const TextStyle(fontFamily: 'Courier', fontSize: 22, fontWeight: FontWeight.bold, color: Colors.black),
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 4),
-                    const Text(
-                      '123 Coffee Street, Diliman\nQuezon City, Metro Manila\nVAT REG TIN: 123-456-789-00000',
-                      style: TextStyle(fontFamily: 'Courier', fontSize: 13, color: Colors.black87),
+                    Text(
+                      '${orderProvider.storeAddress}\nVAT REG TIN: ${orderProvider.tin}',
+                      style: const TextStyle(fontFamily: 'Courier', fontSize: 13, color: Colors.black87),
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 16),
@@ -254,7 +257,7 @@ class ReceiptPreviewModal extends StatelessWidget {
   }
 
 
-  pw.Document _generatePdfDocument() {
+  pw.Document _generatePdfDocument(OrderProvider orderProvider) {
     final String timestampStr = order.timestamp.toLocal().toString().substring(0, 16);
     final String orNumber = 'OR# ${order.id.substring(0, 12).toUpperCase()}';
 
@@ -267,9 +270,9 @@ class ReceiptPreviewModal extends StatelessWidget {
           return pw.Column(
             crossAxisAlignment: pw.CrossAxisAlignment.center,
             children: [
-              pw.Text('PROJECT LATTE COFFEE', style: pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold)),
+              pw.Text(orderProvider.storeName, style: pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold)),
               pw.SizedBox(height: 4),
-              pw.Text('123 Coffee Street, Diliman\nQuezon City, Metro Manila\nVAT REG TIN: 123-456-789-00000', textAlign: pw.TextAlign.center, style: const pw.TextStyle(fontSize: 10)),
+              pw.Text('${orderProvider.storeAddress}\nVAT REG TIN: ${orderProvider.tin}', textAlign: pw.TextAlign.center, style: const pw.TextStyle(fontSize: 10)),
               pw.SizedBox(height: 12),
               pw.Divider(borderStyle: pw.BorderStyle.dashed),
               pw.SizedBox(height: 6),
@@ -390,7 +393,8 @@ class ReceiptPreviewModal extends StatelessWidget {
   }
 
   Future<void> _printPdfReceipt(BuildContext context) async {
-    final doc = _generatePdfDocument();
+    final orderProvider = context.read<OrderProvider>();
+    final doc = _generatePdfDocument(orderProvider);
     await Printing.layoutPdf(
       onLayout: (PdfPageFormat format) async => doc.save(),
       name: 'Receipt_${order.id.substring(0, 8)}',
@@ -398,7 +402,8 @@ class ReceiptPreviewModal extends StatelessWidget {
   }
 
   Future<void> _savePdfReceiptDirectly(BuildContext context) async {
-    final doc = _generatePdfDocument();
+    final orderProvider = context.read<OrderProvider>();
+    final doc = _generatePdfDocument(orderProvider);
     final bytes = await doc.save();
     await Printing.sharePdf(
       bytes: bytes,

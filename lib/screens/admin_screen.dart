@@ -43,10 +43,33 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
   String _menuSearchQuery = '';
   String _menuCategoryFilter = 'All';
 
+  late final OrderProvider _orderProvider;
+
   @override
   void initState() {
     super.initState();
     _loadDashboardData();
+    _orderProvider = context.read<OrderProvider>();
+    _orderProvider.addListener(_onOrderProviderChanged);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _storeNameController.text = _orderProvider.storeName;
+      _storeAddressController.text = _orderProvider.storeAddress;
+      _tinController.text = _orderProvider.tin;
+      _vatRateController.text = (_orderProvider.vatRate * 100).toStringAsFixed(0);
+      _pwdDiscountController.text = (_orderProvider.pwdDiscount * 100).toStringAsFixed(0);
+    });
+  }
+
+  void _onOrderProviderChanged() {
+    if (mounted) {
+      _loadDashboardData();
+    }
+  }
+
+  @override
+  void dispose() {
+    _orderProvider.removeListener(_onOrderProviderChanged);
+    super.dispose();
   }
 
   Future<void> _loadDashboardData() async {
@@ -352,8 +375,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
   }
 
   Widget _buildCustomBarChart() {
-    // Generate hours from 8 AM to 8 PM (8 to 20)
-    final List<int> displayHours = List.generate(13, (index) => index + 8);
+    // Generate all 24 hours of the day (0 to 23) to support late-night & early-morning sales!
+    final List<int> displayHours = List.generate(24, (index) => index);
     final Map<int, double> hourlyRevenueMap = {};
 
     double maxRevenue = 100.0; // Default minimum scale
@@ -366,58 +389,64 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
 
     return SizedBox(
       height: 280,
-      child: Column(
-        children: [
-          Expanded(
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: displayHours.map((hour) {
-                final double revenue = hourlyRevenueMap[hour] ?? 0.0;
-                final double heightFactor = revenue / maxRevenue;
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: SizedBox(
+          width: 860, // Ample width for 24 hours to breathe beautifully!
+          child: Column(
+            children: [
+              Expanded(
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: displayHours.map((hour) {
+                    final double revenue = hourlyRevenueMap[hour] ?? 0.0;
+                    final double heightFactor = revenue / maxRevenue;
 
-                return Tooltip(
-                  message: 'Time: ${hour.toString().padLeft(2, '0')}:00\nRevenue: ₱${revenue.toStringAsFixed(2)}',
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      if (revenue > 0)
-                        Padding(
-                          padding: const EdgeInsets.only(bottom: 8),
-                          child: Text('₱${revenue.toInt()}', style: AppTypography.bodySmall.copyWith(fontSize: 10, color: AppColors.mediumGray)),
-                        ),
-                      AnimatedContainer(
-                        duration: const Duration(milliseconds: 500),
-                        width: 32,
-                        height: 200 * heightFactor,
-                        decoration: BoxDecoration(
-                          color: revenue > 0 ? AppColors.primary : AppColors.mediumGray.withValues(alpha: 0.2),
-                          borderRadius: const BorderRadius.only(topLeft: Radius.circular(6), topRight: Radius.circular(6)),
-                        ),
+                    return Tooltip(
+                      message: 'Time: ${hour.toString().padLeft(2, '0')}:00\nRevenue: ₱${revenue.toStringAsFixed(2)}',
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          if (revenue > 0)
+                            Padding(
+                              padding: const EdgeInsets.only(bottom: 8),
+                              child: Text('₱${revenue.toInt()}', style: AppTypography.bodySmall.copyWith(fontSize: 10, color: AppColors.mediumGray)),
+                            ),
+                          AnimatedContainer(
+                            duration: const Duration(milliseconds: 500),
+                            width: 20,
+                            height: 200 * heightFactor,
+                            decoration: BoxDecoration(
+                              color: revenue > 0 ? AppColors.primary : AppColors.mediumGray.withValues(alpha: 0.2),
+                              borderRadius: const BorderRadius.only(topLeft: Radius.circular(6), topRight: Radius.circular(6)),
+                            ),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
-                );
-              }).toList(),
-            ),
-          ),
-          const SizedBox(height: 16),
-          const Divider(height: 1),
-          const SizedBox(height: 12),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: displayHours.map((hour) {
-              return SizedBox(
-                width: 32,
-                child: Text(
-                  '${hour.toString().padLeft(2, '0')}:00',
-                  textAlign: TextAlign.center,
-                  style: AppTypography.bodySmall.copyWith(color: AppColors.mediumGray, fontSize: 11),
+                    );
+                  }).toList(),
                 ),
-              );
-            }).toList(),
+              ),
+              const SizedBox(height: 16),
+              const Divider(height: 1),
+              const SizedBox(height: 12),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: displayHours.map((hour) {
+                  return SizedBox(
+                    width: 30,
+                    child: Text(
+                      '${hour.toString().padLeft(2, '0')}:00',
+                      textAlign: TextAlign.center,
+                      style: AppTypography.bodySmall.copyWith(color: AppColors.mediumGray, fontSize: 10),
+                    ),
+                  );
+                }).toList(),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
@@ -665,6 +694,19 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
                     OutlinedButton(
                       style: OutlinedButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 20), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
                       onPressed: () {
+                        final orderProvider = context.read<OrderProvider>();
+                        _storeNameController.text = 'PROJECT LATTE COFFEE';
+                        _storeAddressController.text = '123 Coffee Street, Diliman, Quezon City';
+                        _tinController.text = '123-456-789-00000';
+                        _vatRateController.text = '12';
+                        _pwdDiscountController.text = '20';
+                        orderProvider.updateStoreSettings(
+                          name: _storeNameController.text.trim(),
+                          address: _storeAddressController.text.trim(),
+                          tinNum: _tinController.text.trim(),
+                          vat: 0.12,
+                          pwd: 0.20,
+                        );
                         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Settings restored to default.'), backgroundColor: AppColors.mediumGray));
                       },
                       child: const Text('RESET', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
@@ -673,6 +715,16 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
                     ElevatedButton(
                       style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary, foregroundColor: AppColors.white, padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 20), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
                       onPressed: () {
+                        final orderProvider = context.read<OrderProvider>();
+                        final vat = (double.tryParse(_vatRateController.text.trim()) ?? 12.0) / 100.0;
+                        final pwd = (double.tryParse(_pwdDiscountController.text.trim()) ?? 20.0) / 100.0;
+                        orderProvider.updateStoreSettings(
+                          name: _storeNameController.text.trim(),
+                          address: _storeAddressController.text.trim(),
+                          tinNum: _tinController.text.trim(),
+                          vat: vat,
+                          pwd: pwd,
+                        );
                         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('System configuration saved successfully!'), backgroundColor: AppColors.success));
                       },
                       child: const Text('SAVE CONFIGURATION', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),

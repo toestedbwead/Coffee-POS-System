@@ -8,21 +8,19 @@ class TaxService {
   // Senior Citizen / Person with Disability discount
   static const double SC_PWD_DISCOUNT = 0.20; // 20% discount
 
-  /// Calculate tax on subtotal (standard 12% VAT)
-  static double calculateVAT(double subtotal) {
-    return subtotal * VAT_RATE;
+  /// Calculate tax on subtotal
+  static double calculateVAT(double subtotal, {double vatRate = 0.12}) {
+    return subtotal * vatRate;
   }
 
   /// Calculate tax-inclusive total
-  static double calculateTotalWithVAT(double subtotal) {
-    return subtotal + calculateVAT(subtotal);
+  static double calculateTotalWithVAT(double subtotal, {double vatRate = 0.12}) {
+    return subtotal + calculateVAT(subtotal, vatRate: vatRate);
   }
 
-  /// Apply SC/PWD exemption (20% discount on VAT-exclusive portion)
-  /// Returns: {subtotal, vat, total, discount, scPwdApplied}
-  static Map<String, double> calculateWithSCPWDExemption(double subtotal) {
-    // SC/PWD gets 20% discount on the VAT-exclusive amount and is 100% VAT Exempt
-    final discount = subtotal * SC_PWD_DISCOUNT;
+  /// Apply SC/PWD exemption
+  static Map<String, double> calculateWithSCPWDExemption(double subtotal, {double pwdDiscount = 0.20}) {
+    final discount = subtotal * pwdDiscount;
     final discountedSubtotal = subtotal - discount;
     final vat = 0.0; // VAT Exempt
     final total = discountedSubtotal;
@@ -40,27 +38,29 @@ class TaxService {
   static Map<String, dynamic> getReceiptBreakdown(
     double subtotal, {
     bool applySCPWD = false,
+    double vatRate = 0.12,
+    double pwdDiscount = 0.20,
   }) {
     if (applySCPWD) {
-      final breakdown = calculateWithSCPWDExemption(subtotal);
+      final breakdown = calculateWithSCPWDExemption(subtotal, pwdDiscount: pwdDiscount);
       return {
         'originalAmount': subtotal,
         'scPwdDiscount': breakdown['discount'],
         'discountedAmount': breakdown['subtotal'],
         'vat': breakdown['vat'],
-        'vatRate': '${(VAT_RATE * 100).toStringAsFixed(0)}%',
-        'discountRate': '${(SC_PWD_DISCOUNT * 100).toStringAsFixed(0)}%',
+        'vatRate': '${(vatRate * 100).toStringAsFixed(0)}%',
+        'discountRate': '${(pwdDiscount * 100).toStringAsFixed(0)}%',
         'totalAmount': breakdown['total'],
         'scPwdApplied': true,
       };
     } else {
-      final vat = calculateVAT(subtotal);
+      final vat = calculateVAT(subtotal, vatRate: vatRate);
       return {
         'originalAmount': subtotal,
         'scPwdDiscount': 0.0,
         'discountedAmount': subtotal,
         'vat': vat,
-        'vatRate': '${(VAT_RATE * 100).toStringAsFixed(0)}%',
+        'vatRate': '${(vatRate * 100).toStringAsFixed(0)}%',
         'discountRate': '0%',
         'totalAmount': subtotal + vat,
         'scPwdApplied': false,
