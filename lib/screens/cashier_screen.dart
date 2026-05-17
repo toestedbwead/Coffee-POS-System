@@ -21,7 +21,7 @@ class CashierScreen extends StatefulWidget {
 }
 
 class _CashierScreenState extends State<CashierScreen> {
-  String selectedCategoryId = '1'; // Default to Espresso
+  String selectedCategoryId = 'c1'; // Default to Hot Coffee
 
   // Get products for selected category
   List<Product> getDisplayProducts() {

@@ -33,18 +33,15 @@ class Product {
     this.isAvailable = true,
   });
 
-  // calculate final sized base on price
+  // calculate final size price based on official documentation tiers (+20 PHP for second size)
   double getPriceForSize(String size) {
-    switch (size) {
-      case 'Small':
-        return basePrice;
-      case 'Medium':
-        return basePrice + 15;
-      case 'Large':
-        return basePrice + 30;
-      default:
-        return basePrice; 
+    if (availableSizes.isNotEmpty && size == availableSizes.first) {
+      return basePrice;
     }
+    if (availableSizes.length > 1 && size == availableSizes[1]) {
+      return basePrice + 20.0;
+    }
+    return basePrice; 
   }
 }
 
