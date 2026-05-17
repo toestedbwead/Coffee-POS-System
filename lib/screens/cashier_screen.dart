@@ -7,6 +7,7 @@ import '../theme/app_theme.dart';
 import '../widgets/latte_components.dart';
 import '../widgets/payment_modal.dart';
 import '../widgets/scpwd_dialog.dart';
+import 'history_screen.dart';
 
 class CashierScreen extends StatefulWidget {
   const CashierScreen({Key? key}) : super(key: key);
@@ -61,7 +62,23 @@ class _CashierScreenState extends State<CashierScreen> {
       appBar: AppBar(
         title: const Text('Project Latte POS'),
         centerTitle: true,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.history_sharp, size: 28),
+            tooltip: 'Transaction History',
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const TransactionHistoryScreen(),
+                ),
+              );
+            },
+          ),
+          const SizedBox(width: 16),
+        ],
       ),
+
       body: Row(
         children: [
           // LEFT COLUMN: Categories

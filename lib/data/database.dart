@@ -106,6 +106,9 @@ class DatabaseHelper {
         'total': order.total,
         'paymentMethod': order.paymentMethod,
         'status': order.status,
+        'customerName': order.scPwdId ?? 'Guest',
+        'scPwdApplied': order.scPwdApplied ? 1 : 0,
+        'discountAmount': order.discountAmount,
       });
 
       // Save order items

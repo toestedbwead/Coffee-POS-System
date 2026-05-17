@@ -40,7 +40,11 @@ class OrderService {
         total: taxInfo['totalAmount'] as double,
         paymentMethod: paymentMethod,
         status: 'Completed',
+        scPwdApplied: applySCPWD,
+        discountAmount: taxInfo['scPwdDiscount'] as double,
+        scPwdId: scPwdID,
       );
+
 
       // Save to database
       final saved = await _db.saveOrder(order);

@@ -95,6 +95,9 @@ class Order {
   final double total;
   final String paymentMethod; // cash, ewallet
   final String status; // pending, completed, voided
+  final bool scPwdApplied;
+  final double discountAmount;
+  final String? scPwdId;
 
   Order({
     required this.id,
@@ -104,6 +107,9 @@ class Order {
     required this.taxAmount,
     required this.total,
     required this.paymentMethod,
-    this.status = 'Completed'
+    this.status = 'Completed',
+    this.scPwdApplied = false,
+    this.discountAmount = 0.0,
+    this.scPwdId,
   });
 }
