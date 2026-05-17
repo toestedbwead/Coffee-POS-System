@@ -17,7 +17,7 @@ void main() async {
     backgroundColor: Colors.transparent,
     skipTaskbar: false,
     titleBarStyle: TitleBarStyle.normal,
-    title: "Project Latte POS",
+    title: "Kape Ka\'Pre?",
   );
   
   windowManager.waitUntilReadyToShow(windowOptions, () async {
@@ -41,7 +41,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Project Latte - Coffee POS',
+      title: 'Kape Ka\'Pre?',
       theme: AppTheme.lightTheme,
       home: const CashierScreen(),
       debugShowCheckedModeBanner: false,

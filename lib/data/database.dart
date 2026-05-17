@@ -25,11 +25,21 @@ class DatabaseHelper {
     final dbPath = await getDatabasesPath();
     final path = '$dbPath/latte_pos.db';
 
-    return openDatabase(
+    final db = await openDatabase(
       path,
       version: 1,
       onCreate: _onCreate,
     );
+
+    // Ensure settings table exists even on existing databases
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS settings (
+        key TEXT PRIMARY KEY,
+        value TEXT NOT NULL
+      )
+    ''');
+
+    return db;
   }
 
   Future<void> _onCreate(Database db, int version) async {
@@ -89,6 +99,50 @@ class DatabaseHelper {
     await db.execute('''
       CREATE INDEX idx_order_items_orderId ON order_items(orderId)
     ''');
+
+    // Settings table
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS settings (
+        key TEXT PRIMARY KEY,
+        value TEXT NOT NULL
+      )
+    ''');
+  }
+
+  // ==================== SETTINGS OPERATIONS ====================
+
+  Future<Map<String, String>> getStoreSettings() async {
+    try {
+      final db = await database;
+      final List<Map<String, dynamic>> maps = await db.query('settings');
+      Map<String, String> settings = {};
+      for (var map in maps) {
+        settings[map['key'] as String] = map['value'] as String;
+      }
+      return settings;
+    } catch (e) {
+      print('Error fetching store settings: $e');
+      return {};
+    }
+  }
+
+  Future<bool> saveStoreSettings(Map<String, String> settings) async {
+    try {
+      final db = await database;
+      await db.transaction((txn) async {
+        for (var entry in settings.entries) {
+          await txn.insert(
+            'settings',
+            {'key': entry.key, 'value': entry.value},
+            conflictAlgorithm: ConflictAlgorithm.replace,
+          );
+        }
+      });
+      return true;
+    } catch (e) {
+      print('Error saving store settings: $e');
+      return false;
+    }
   }
 
   // ==================== ORDER OPERATIONS ====================

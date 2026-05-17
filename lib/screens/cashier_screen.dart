@@ -150,7 +150,7 @@ class _CashierScreenState extends State<CashierScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Project Latte POS'),
+        title: const Text('Kape Ka\'Pre?'),
         centerTitle: true,
         actions: [
           IconButton(

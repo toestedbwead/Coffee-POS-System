@@ -71,6 +71,24 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
   void _onOrderProviderChanged() {
     if (mounted) {
       _loadDashboardData();
+      // Keep text controllers in sync with persistent OrderProvider state
+      if (_storeNameController.text != _orderProvider.storeName) {
+        _storeNameController.text = _orderProvider.storeName;
+      }
+      if (_storeAddressController.text != _orderProvider.storeAddress) {
+        _storeAddressController.text = _orderProvider.storeAddress;
+      }
+      if (_tinController.text != _orderProvider.tin) {
+        _tinController.text = _orderProvider.tin;
+      }
+      final expectedVat = (_orderProvider.vatRate * 100).toStringAsFixed(0);
+      if (_vatRateController.text != expectedVat) {
+        _vatRateController.text = expectedVat;
+      }
+      final expectedPwd = (_orderProvider.pwdDiscount * 100).toStringAsFixed(0);
+      if (_pwdDiscountController.text != expectedPwd) {
+        _pwdDiscountController.text = expectedPwd;
+      }
     }
   }
 

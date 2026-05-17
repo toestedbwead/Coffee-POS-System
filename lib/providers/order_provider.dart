@@ -3,6 +3,7 @@ import '../data/mock_menu.dart';
 import '../models/product_model.dart';
 import '../services/tax_service.dart';
 import '../services/order_service.dart';
+import '../data/database.dart';
 
 class OrderProvider with ChangeNotifier {
   final OrderService _orderService = OrderService();
@@ -17,6 +18,23 @@ class OrderProvider with ChangeNotifier {
   String _tin = '123-456-789-00000';
   double _vatRate = 0.12;
   double _pwdDiscount = 0.20;
+
+  OrderProvider() {
+    _loadSettings();
+  }
+
+  Future<void> _loadSettings() async {
+    final dbHelper = DatabaseHelper();
+    final settings = await dbHelper.getStoreSettings();
+    if (settings.isNotEmpty) {
+      if (settings.containsKey('storeName')) _storeName = settings['storeName']!;
+      if (settings.containsKey('storeAddress')) _storeAddress = settings['storeAddress']!;
+      if (settings.containsKey('tin')) _tin = settings['tin']!;
+      if (settings.containsKey('vatRate')) _vatRate = double.tryParse(settings['vatRate']!) ?? 0.12;
+      if (settings.containsKey('pwdDiscount')) _pwdDiscount = double.tryParse(settings['pwdDiscount']!) ?? 0.20;
+      notifyListeners();
+    }
+  }
 
   List<OrderItem> get items => _items;
   bool get applySCPWD => _applySCPWD;
@@ -146,6 +164,17 @@ class OrderProvider with ChangeNotifier {
     _tin = tinNum;
     _vatRate = vat;
     _pwdDiscount = pwd;
+
+    // Save to SQLite
+    final dbHelper = DatabaseHelper();
+    dbHelper.saveStoreSettings({
+      'storeName': name,
+      'storeAddress': address,
+      'tin': tinNum,
+      'vatRate': vat.toString(),
+      'pwdDiscount': pwd.toString(),
+    });
+
     notifyListeners();
   }
 }
