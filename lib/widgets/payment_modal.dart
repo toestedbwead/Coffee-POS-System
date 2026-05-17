@@ -91,6 +91,21 @@ class _PaymentModalDialogState extends State<PaymentModalDialog> {
     });
   }
 
+  void _onEWalletKeyTap(String key) {
+    setState(() {
+      if (key == 'C') {
+        _refController.text = '';
+      } else if (key == '⌫') {
+        String current = _refController.text;
+        if (current.isNotEmpty) {
+          _refController.text = current.substring(0, current.length - 1);
+        }
+      } else {
+        _refController.text += key;
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final double changeDue = cashReceived - widget.totalAmount;
@@ -289,52 +304,91 @@ class _PaymentModalDialogState extends State<PaymentModalDialog> {
                   ],
                 ),
               ] else ...[
-                // e-Wallet Section
-                Container(
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    color: AppColors.lightGray,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: AppColors.mediumGray.withValues(alpha: 0.3)),
-                  ),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.qr_code_2, size: 50, color: AppColors.primary),
-                      const SizedBox(width: 16),
-                      Expanded(
+                // e-Wallet 2-Column Section
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Left Column: QR Scan Box + Reference Input
+                    Expanded(
+                      flex: 5,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(20),
+                            decoration: BoxDecoration(
+                              color: AppColors.lightGray,
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: AppColors.mediumGray.withValues(alpha: 0.3)),
+                            ),
+                            child: Row(
+                              children: [
+                                const Icon(Icons.qr_code_2, size: 50, color: AppColors.primary),
+                                const SizedBox(width: 16),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'Customer QR Scan',
+                                        style: AppTypography.labelMedium,
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        'Ask customer to scan your store GCash/Maya QR code and verify transfer.',
+                                        style: AppTypography.bodySmall,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 24),
+                          Text(
+                            'Reference Number (Optional)',
+                            style: AppTypography.labelMedium,
+                          ),
+                          const SizedBox(height: 8),
+                          TextField(
+                            controller: _refController,
+                            style: AppTypography.h3.copyWith(color: AppColors.darkGray, fontSize: 22),
+                            decoration: InputDecoration(
+                              hintText: 'e.g. 000123456789',
+                              prefixIcon: const Icon(Icons.tag, color: AppColors.primary, size: 26),
+                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 28),
+                    // Right Column: On-Screen Touch Keyboard for e-Wallet
+                    Expanded(
+                      flex: 6,
+                      child: Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: AppColors.primary.withValues(alpha: 0.05),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: AppColors.primary.withValues(alpha: 0.2)),
+                        ),
                         child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Customer QR Scan',
+                              'e-Wallet Touch Keyboard',
                               style: AppTypography.labelMedium,
                             ),
-                            const SizedBox(height: 4),
-                            Text(
-                              'Ask the customer to scan your store GCash or Maya QR code and verify the successful transfer.',
-                              style: AppTypography.bodySmall,
-                            ),
+                            const SizedBox(height: 12),
+                            _buildEWalletKeyboard(),
                           ],
                         ),
                       ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 24),
-                Text(
-                  'Reference Number (Optional)',
-                  style: AppTypography.labelMedium,
-                ),
-                const SizedBox(height: 8),
-                TextField(
-                  controller: _refController,
-                  style: AppTypography.bodyRegular,
-                  decoration: const InputDecoration(
-                    hintText: 'e.g. 000123456789',
-                    prefixIcon: Icon(Icons.tag, color: AppColors.primary),
-                  ),
+                    ),
+                  ],
                 ),
               ],
+
 
               const SizedBox(height: 32),
 
@@ -420,6 +474,67 @@ class _PaymentModalDialogState extends State<PaymentModalDialog> {
                             ? AppColors.white
                             : AppColors.primary,
                         fontSize: btn == 'Exact' ? 18 : 22,
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+        );
+      }).toList(),
+    );
+  }
+
+  Widget _buildEWalletKeyboard() {
+    final List<List<String>> rows = [
+      ['7', '8', '9', '⌫'],
+      ['4', '5', '6', 'C'],
+      ['1', '2', '3', '00'],
+      ['0', 'GCash-', 'Maya-', 'QR-'],
+    ];
+
+    return Column(
+      children: rows.map((row) {
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 8.0),
+          child: Row(
+            children: row.map((btn) {
+              final bool isSpecial = btn == 'C' || btn == '⌫';
+              final bool isPrefix = btn == 'GCash-' || btn == 'Maya-' || btn == 'QR-';
+
+              return Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 4.0),
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: isSpecial
+                          ? AppColors.secondary
+                          : isPrefix
+                              ? AppColors.accent
+                              : AppColors.white,
+                      foregroundColor: isSpecial || isPrefix
+                          ? AppColors.white
+                          : AppColors.primary,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        side: BorderSide(
+                          color: isSpecial || isPrefix
+                              ? Colors.transparent
+                              : AppColors.mediumGray.withValues(alpha: 0.3),
+                        ),
+                      ),
+                      elevation: isSpecial || isPrefix ? 2 : 1,
+                    ),
+                    onPressed: () => _onEWalletKeyTap(btn),
+                    child: Text(
+                      btn,
+                      style: AppTypography.h3.copyWith(
+                        color: isSpecial || isPrefix
+                            ? AppColors.white
+                            : AppColors.primary,
+                        fontSize: isPrefix ? 14 : 22,
                       ),
                     ),
                   ),
