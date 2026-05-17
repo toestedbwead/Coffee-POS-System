@@ -21,11 +21,11 @@ class TaxService {
   /// Apply SC/PWD exemption (20% discount on VAT-exclusive portion)
   /// Returns: {subtotal, vat, total, discount, scPwdApplied}
   static Map<String, double> calculateWithSCPWDExemption(double subtotal) {
-    // SC/PWD gets 20% discount on the VAT-exclusive amount
+    // SC/PWD gets 20% discount on the VAT-exclusive amount and is 100% VAT Exempt
     final discount = subtotal * SC_PWD_DISCOUNT;
     final discountedSubtotal = subtotal - discount;
-    final vat = calculateVAT(discountedSubtotal);
-    final total = discountedSubtotal + vat;
+    final vat = 0.0; // VAT Exempt
+    final total = discountedSubtotal;
 
     return {
       'originalSubtotal': subtotal,

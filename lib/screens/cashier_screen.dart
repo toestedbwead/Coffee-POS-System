@@ -6,6 +6,7 @@ import '../providers/order_provider.dart';
 import '../theme/app_theme.dart';
 import '../widgets/latte_components.dart';
 import '../widgets/payment_modal.dart';
+import '../widgets/scpwd_dialog.dart';
 
 class CashierScreen extends StatefulWidget {
   const CashierScreen({Key? key}) : super(key: key);
@@ -53,6 +54,8 @@ class _CashierScreenState extends State<CashierScreen> {
     final subtotal = orderProvider.subtotal;
     final tax = orderProvider.vat;
     final total = orderProvider.total;
+    final discount = orderProvider.discount;
+    final isSCPWD = orderProvider.applySCPWD;
 
     return Scaffold(
       appBar: AppBar(
@@ -231,6 +234,32 @@ class _CashierScreenState extends State<CashierScreen> {
                     subtotal: subtotal,
                     tax: tax,
                     total: total,
+                    discount: discount,
+                    isSCPWD: isSCPWD,
+                    onToggleSCPWD: (value) {
+                      if (value) {
+                        showDialog(
+                          context: context,
+                          builder: (context) => SCPWDInputDialog(
+                            onConfirm: (idNumber) {
+                              Navigator.pop(context);
+                              orderProvider.toggleSCPWD(true, id: idNumber);
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('SC/PWD Discount applied (ID: $idNumber)'),
+                                  backgroundColor: Colors.green,
+                                ),
+                              );
+                            },
+                            onCancel: () {
+                              Navigator.pop(context);
+                            },
+                          ),
+                        );
+                      } else {
+                        orderProvider.toggleSCPWD(false);
+                      }
+                    },
                     onCheckout: () {
                       if (orderItems.isEmpty) {
                         ScaffoldMessenger.of(context).showSnackBar(

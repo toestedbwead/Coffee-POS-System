@@ -188,6 +188,9 @@ class OrderSummaryCard extends StatelessWidget {
   final double subtotal;
   final double tax;
   final double total;
+  final double discount;
+  final bool isSCPWD;
+  final Function(bool value) onToggleSCPWD;
   final VoidCallback onCheckout;
   final VoidCallback onClear;
 
@@ -197,6 +200,9 @@ class OrderSummaryCard extends StatelessWidget {
     required this.subtotal,
     required this.tax,
     required this.total,
+    required this.discount,
+    required this.isSCPWD,
+    required this.onToggleSCPWD,
     required this.onCheckout,
     required this.onClear,
   }) : super(key: key);
@@ -249,19 +255,53 @@ class OrderSummaryCard extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 8),
+            // SC/PWD Toggle
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'SC/PWD (20% Off):',
+                  style: AppTypography.bodySmall.copyWith(color: AppColors.white),
+                ),
+                Switch(
+                  value: isSCPWD,
+                  onChanged: onToggleSCPWD,
+                  activeColor: AppColors.accent,
+                ),
+              ],
+            ),
+            if (isSCPWD) ...[
+              const SizedBox(height: 4),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'SC/PWD Discount:',
+                    style: AppTypography.bodySmall.copyWith(color: AppColors.accent),
+                  ),
+                  Text(
+                    '-₱${discount.toStringAsFixed(2)}',
+                    style: AppTypography.bodySmall.copyWith(color: AppColors.accent, fontWeight: FontWeight.bold),
+                  ),
+                ],
+              ),
+            ],
+            const SizedBox(height: 8),
             // Tax
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  'Tax:',
+                  'Tax (12% VAT):',
                   style: AppTypography.bodySmall
                       .copyWith(color: AppColors.white),
                 ),
                 Text(
-                  '₱${tax.toStringAsFixed(2)}',
-                  style: AppTypography.bodySmall
-                      .copyWith(color: AppColors.white),
+                  isSCPWD ? 'VAT Exempt' : '₱${tax.toStringAsFixed(2)}',
+                  style: AppTypography.bodySmall.copyWith(
+                    color: isSCPWD ? AppColors.accent : AppColors.white,
+                    fontWeight: isSCPWD ? FontWeight.bold : FontWeight.normal,
+                  ),
                 ),
               ],
             ),
@@ -315,4 +355,4 @@ class OrderSummaryCard extends StatelessWidget {
       ),
     );
   }
-}
+}
