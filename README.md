@@ -90,19 +90,22 @@ Project Latte is a high-speed, offline-first Point of Sale (POS) system built wi
 
 #### Phase 6: Admin & Reporting
 - [x] Admin dashboard:
-  - Daily sales summary
-  - Top-selling items
-  - Revenue trends
-  - Transaction history
+  - [x] Daily sales summary (Net Revenue, Gross, Tax, Discounts)
+  - [x] Cashier tender reconciliation (Cash Drawer, E-Wallet, Card breakdowns)
+  - [x] Category sales performance (SQL JOIN with automated background seeding)
+  - [x] Top-selling items & hourly revenue trends
+  - [x] Responsive layout scaling (`Expanded` + `TextOverflow.ellipsis` overflow protection)
 - [x] Export functionality:
-  - CSV export for accounting
-  - Excel reports
-  - Daily/weekly/monthly reports
+  - [x] Interactive Report Filter Bar (Date Range, Payment Method, Status filtering)
+  - [x] Multi-page formal Daily Sales PDF reports
+  - [x] Filtered master transaction CSV export for accounting (QuickBooks / Excel)
+  - [x] Filtered itemized inventory CSV export for line-item depletion audits
+  - [x] Dynamic injection of shop credentials and applied filter metadata
 - [x] Settings panel:
-  - Shop info configuration
-  - Tax settings
-  - Printer settings
-  - Product management (add/edit/delete)
+  - [x] Shop info configuration (Store Name, Address, TIN)
+  - [x] Tax settings (VAT & SC/PWD discount rates)
+  - [x] Printer settings (USB001 buffer & 80mm format)
+  - [x] Product management (add/edit/delete with live SQLite synchronization)
 
 #### Phase 7: Advanced Features (Post-MVP)
 - [ ] Multi-terminal support (local socket syncing)

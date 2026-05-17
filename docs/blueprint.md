@@ -43,11 +43,19 @@
 
 ### Phase 6: Admin Management Console
 *   **Secure Access**: Protected by 4-digit Admin PIN authorization (`1234`) from the cashier dashboard.
-*   **Sales Analytics**: Real-time KPI cards for Gross Revenue, Transaction Counts, Average Order Value, and Items Sold.
-*   **Animated Revenue Charts**: Custom, animated hourly sales bar chart (8 AM to 8 PM) tracking peak business hours with interactive tooltips.
-*   **Top Products Ranking**: Aggregated ranking table for the top 10 best-selling items by volume and revenue.
-*   **Accounting Exports**: One-click generation of Daily Sales PDF summaries and Monthly Accounting CSV spreadsheets.
-*   **System Settings Panel**: Live configuration of shop credentials, tax/discount rates, and hardware peripheral settings.
+*   **Sales Analytics & Reconciliation**:
+    *   **Financial Overview**: Real-time KPI cards for Gross Revenue, Net Revenue (Gross - VAT - Discounts), VAT collected, SC/PWD discounts applied, Transaction Counts, and Average Order Value.
+    *   **Tender Reconciliation**: Visual breakdown of Cash Drawer (Physical Cash), E-Wallet (GCash/Maya transfers), and Credit/Debit Card terminal totals for shift-end audits.
+    *   **Sales by Menu Category**: SQL `JOIN`-powered breakdown of quantity sold and gross revenue per category (e.g., Hot Coffee, Frappes), backed by automated background SQLite table seeding and dynamic ID-to-name mapping.
+    *   **Animated Revenue Charts**: Custom, animated hourly sales bar chart tracking peak business hours with interactive tooltips.
+    *   **Top Products Ranking**: Aggregated ranking table for the top 10 best-selling items by volume and revenue.
+    *   **Responsive Layout**: Bulletproof desktop scaling utilizing `Expanded` and `TextOverflow.ellipsis` to eliminate `RenderFlex` overflow exceptions on narrow window widths.
+*   **Export & Accounting Reports**:
+    *   **Interactive Filter Bar**: Enterprise multi-criteria filtering by custom Date Range, Payment Method (`All`, `Cash`, `E-Wallet`, `Card`), and Transaction Status (`All`, `Completed`, `Voided`).
+    *   **Daily Sales Report (PDF)**: Multi-page formal accounting report embedding financial summaries, tender reconciliation, and category sales tables.
+    *   **Filtered Accounting (CSV)**: Master transaction spreadsheet dynamically injecting shop credentials (`Store Name`, `Address`, `TIN`) and applied filter metadata for QuickBooks / Excel import.
+    *   **Filtered Inventory (CSV)**: Granular itemized line-item spreadsheet tracking every individual cup, size, and add-on sold for precise inventory depletion audits.
+*   **System Settings Panel**: Live configuration of shop credentials, tax/discount rates, and hardware peripheral settings, dynamically injected into all generated reports.
 
 ---
 
