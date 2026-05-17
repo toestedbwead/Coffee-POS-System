@@ -39,161 +39,151 @@ class ReceiptPreviewModal extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Thermal Receipt Paper Header (FIXED!)
-            Padding(
-              padding: const EdgeInsets.only(top: 28, left: 28, right: 28, bottom: 8),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Text(
-                    'PROJECT LATTE COFFEE',
-                    style: TextStyle(fontFamily: 'Courier', fontSize: 22, fontWeight: FontWeight.bold, color: Colors.black),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 4),
-                  const Text(
-                    '123 Coffee Street, Diliman\nQuezon City, Metro Manila\nVAT REG TIN: 123-456-789-00000',
-                    style: TextStyle(fontFamily: 'Courier', fontSize: 13, color: Colors.black87),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 16),
-                  const Text('----------------------------------------', style: TextStyle(fontFamily: 'Courier', color: Colors.black54)),
-                  const SizedBox(height: 8),
-
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(orNumber, style: const TextStyle(fontFamily: 'Courier', fontSize: 13, fontWeight: FontWeight.bold, color: Colors.black)),
-                      Text(timestampStr, style: const TextStyle(fontFamily: 'Courier', fontSize: 13, color: Colors.black87)),
-                    ],
-                  ),
-                  const SizedBox(height: 4),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text('CASHIER: Terminal 01', style: TextStyle(fontFamily: 'Courier', fontSize: 13, color: Colors.black87)),
-                      Text(order.scPwdId != null ? 'SC/PWD: ${order.scPwdId}' : 'CUSTOMER: Guest', style: const TextStyle(fontFamily: 'Courier', fontSize: 13, color: Colors.black87)),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  const Text('----------------------------------------', style: TextStyle(fontFamily: 'Courier', color: Colors.black54)),
-                ],
-              ),
-            ),
-
-            // Thermal Receipt Items List (COMPACT & CONSTRAINED!)
-            Container(
-              constraints: const BoxConstraints(maxHeight: 160), // Perfectly fits 3-4 items, scrolls only if more!
-              padding: const EdgeInsets.symmetric(horizontal: 28),
+            // Thermal Receipt Paper Body (Scrollable if window height is small!)
+            Flexible(
               child: SingleChildScrollView(
+                padding: const EdgeInsets.all(28),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: order.items.map((item) {
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: 12),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  '${item.quantity}x ${item.product.name}',
-                                  style: const TextStyle(fontFamily: 'Courier', fontSize: 14, fontWeight: FontWeight.bold, color: Colors.black),
-                                ),
-                              ),
-                              Text(
-                                '₱${item.getTotal().toStringAsFixed(2)}',
-                                style: const TextStyle(fontFamily: 'Courier', fontSize: 14, fontWeight: FontWeight.bold, color: Colors.black),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            '   ${item.selectedSize.toUpperCase()} • ${item.selectedTemperature.toUpperCase()}',
-                            style: const TextStyle(fontFamily: 'Courier', fontSize: 12, color: Colors.black87),
-                          ),
-                          if (item.selectedAddOns != null && item.selectedAddOns!.isNotEmpty)
-                            Text(
-                              '   Add-ons: ${item.selectedAddOns!.map((a) => a.name).join(", ")}',
-                              style: const TextStyle(fontFamily: 'Courier', fontSize: 12, color: Colors.black54),
-                            ),
-                        ],
-                      ),
-                    );
-                  }).toList(),
-                ),
-              ),
-            ),
+                  children: [
+                    // Store Header
+                    const Text(
+                      'PROJECT LATTE COFFEE',
+                      style: TextStyle(fontFamily: 'Courier', fontSize: 22, fontWeight: FontWeight.bold, color: Colors.black),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 4),
+                    const Text(
+                      '123 Coffee Street, Diliman\nQuezon City, Metro Manila\nVAT REG TIN: 123-456-789-00000',
+                      style: TextStyle(fontFamily: 'Courier', fontSize: 13, color: Colors.black87),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 16),
+                    const Text('----------------------------------------', style: TextStyle(fontFamily: 'Courier', color: Colors.black54)),
+                    const SizedBox(height: 8),
 
-            // Thermal Receipt Totals & QR Code (FIXED!)
-            Padding(
-              padding: const EdgeInsets.only(top: 8, left: 28, right: 28, bottom: 24),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Text('----------------------------------------', style: TextStyle(fontFamily: 'Courier', color: Colors.black54)),
-                  const SizedBox(height: 16),
-
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text('SUBTOTAL (VAT Excl):', style: TextStyle(fontFamily: 'Courier', fontSize: 13, color: Colors.black87)),
-                      Text('₱${order.subtotal.toStringAsFixed(2)}', style: const TextStyle(fontFamily: 'Courier', fontSize: 13, color: Colors.black87)),
-                    ],
-                  ),
-                  if (order.scPwdApplied) ...[
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(orNumber, style: const TextStyle(fontFamily: 'Courier', fontSize: 13, fontWeight: FontWeight.bold, color: Colors.black)),
+                        Text(timestampStr, style: const TextStyle(fontFamily: 'Courier', fontSize: 13, color: Colors.black87)),
+                      ],
+                    ),
                     const SizedBox(height: 4),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text('SC/PWD DISCOUNT (20%):', style: TextStyle(fontFamily: 'Courier', fontSize: 13, color: Colors.black87)),
-                        Text('-₱${order.discountAmount.toStringAsFixed(2)}', style: const TextStyle(fontFamily: 'Courier', fontSize: 13, fontWeight: FontWeight.bold, color: Colors.black)),
+                        const Text('CASHIER: Terminal 01', style: TextStyle(fontFamily: 'Courier', fontSize: 13, color: Colors.black87)),
+                        Text(order.scPwdId != null ? 'SC/PWD: ${order.scPwdId}' : 'CUSTOMER: Guest', style: const TextStyle(fontFamily: 'Courier', fontSize: 13, color: Colors.black87)),
                       ],
                     ),
+                    const SizedBox(height: 8),
+                    const Text('----------------------------------------', style: TextStyle(fontFamily: 'Courier', color: Colors.black54)),
+                    const SizedBox(height: 16),
+
+                    // Thermal Receipt Items List
+                    Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: order.items.map((item) {
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 12),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      '${item.quantity}x ${item.product.name}',
+                                      style: const TextStyle(fontFamily: 'Courier', fontSize: 14, fontWeight: FontWeight.bold, color: Colors.black),
+                                    ),
+                                  ),
+                                  Text(
+                                    '₱${item.getTotal().toStringAsFixed(2)}',
+                                    style: const TextStyle(fontFamily: 'Courier', fontSize: 14, fontWeight: FontWeight.bold, color: Colors.black),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                '   ${item.selectedSize.toUpperCase()} • ${item.selectedTemperature.toUpperCase()}',
+                                style: const TextStyle(fontFamily: 'Courier', fontSize: 12, color: Colors.black87),
+                              ),
+                              if (item.selectedAddOns != null && item.selectedAddOns!.isNotEmpty)
+                                Text(
+                                  '   Add-ons: ${item.selectedAddOns!.map((a) => a.name).join(", ")}',
+                                  style: const TextStyle(fontFamily: 'Courier', fontSize: 12, color: Colors.black54),
+                                ),
+                            ],
+                          ),
+                        );
+                      }).toList(),
+                    ),
+
+                    const SizedBox(height: 8),
+                    const Text('----------------------------------------', style: TextStyle(fontFamily: 'Courier', color: Colors.black54)),
+                    const SizedBox(height: 16),
+
+                    // Thermal Receipt Totals & QR Code
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text('SUBTOTAL (VAT Excl):', style: TextStyle(fontFamily: 'Courier', fontSize: 13, color: Colors.black87)),
+                        Text('₱${order.subtotal.toStringAsFixed(2)}', style: const TextStyle(fontFamily: 'Courier', fontSize: 13, color: Colors.black87)),
+                      ],
+                    ),
+                    if (order.scPwdApplied) ...[
+                      const SizedBox(height: 4),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text('SC/PWD DISCOUNT (20%):', style: TextStyle(fontFamily: 'Courier', fontSize: 13, color: Colors.black87)),
+                          Text('-₱${order.discountAmount.toStringAsFixed(2)}', style: const TextStyle(fontFamily: 'Courier', fontSize: 13, fontWeight: FontWeight.bold, color: Colors.black)),
+                        ],
+                      ),
+                    ],
+                    const SizedBox(height: 4),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text('12% VAT:', style: TextStyle(fontFamily: 'Courier', fontSize: 13, color: Colors.black87)),
+                        Text(order.scPwdApplied ? 'VAT Exempt' : '₱${order.taxAmount.toStringAsFixed(2)}', style: const TextStyle(fontFamily: 'Courier', fontSize: 13, color: Colors.black87)),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    const Text('----------------------------------------', style: TextStyle(fontFamily: 'Courier', color: Colors.black54)),
+                    const SizedBox(height: 12),
+
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text('TOTAL AMOUNT DUE:', style: TextStyle(fontFamily: 'Courier', fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black)),
+                        Text('₱${order.total.toStringAsFixed(2)}', style: const TextStyle(fontFamily: 'Courier', fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black)),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text('PAID VIA (${paymentMethod.split(" ")[0]}):', style: const TextStyle(fontFamily: 'Courier', fontSize: 13, color: Colors.black87)),
+                        Text('₱${order.total.toStringAsFixed(2)}', style: const TextStyle(fontFamily: 'Courier', fontSize: 13, color: Colors.black87)),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    const Text('----------------------------------------', style: TextStyle(fontFamily: 'Courier', color: Colors.black54)),
+                    const SizedBox(height: 16),
+
+                    const Text('THIS SERVES AS AN OFFICIAL RECEIPT', style: TextStyle(fontFamily: 'Courier', fontSize: 11, fontWeight: FontWeight.bold, color: Colors.black54)),
+                    const SizedBox(height: 4),
+                    const Text('Thank you for having coffee with us!', style: TextStyle(fontFamily: 'Courier', fontSize: 12, color: Colors.black87)),
+                    const SizedBox(height: 16),
+                    const Icon(Icons.qr_code_2, size: 64, color: Colors.black),
+                    const SizedBox(height: 4),
+                    Text(order.id.substring(0, 16), style: const TextStyle(fontFamily: 'Courier', fontSize: 10, color: Colors.black54)),
                   ],
-                  const SizedBox(height: 4),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text('12% VAT:', style: TextStyle(fontFamily: 'Courier', fontSize: 13, color: Colors.black87)),
-                      Text(order.scPwdApplied ? 'VAT Exempt' : '₱${order.taxAmount.toStringAsFixed(2)}', style: const TextStyle(fontFamily: 'Courier', fontSize: 13, color: Colors.black87)),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  const Text('----------------------------------------', style: TextStyle(fontFamily: 'Courier', color: Colors.black54)),
-                  const SizedBox(height: 12),
-
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text('TOTAL AMOUNT DUE:', style: TextStyle(fontFamily: 'Courier', fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black)),
-                      Text('₱${order.total.toStringAsFixed(2)}', style: const TextStyle(fontFamily: 'Courier', fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black)),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text('PAID VIA (${paymentMethod.split(" ")[0]}):', style: const TextStyle(fontFamily: 'Courier', fontSize: 13, color: Colors.black87)),
-                      Text('₱${order.total.toStringAsFixed(2)}', style: const TextStyle(fontFamily: 'Courier', fontSize: 13, color: Colors.black87)),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  const Text('----------------------------------------', style: TextStyle(fontFamily: 'Courier', color: Colors.black54)),
-                  const SizedBox(height: 16),
-
-                  // Footer Barcode / Message
-                  const Text('THIS SERVES AS AN OFFICIAL RECEIPT', style: TextStyle(fontFamily: 'Courier', fontSize: 11, fontWeight: FontWeight.bold, color: Colors.black54)),
-                  const SizedBox(height: 4),
-                  const Text('Thank you for having coffee with us!', style: TextStyle(fontFamily: 'Courier', fontSize: 12, color: Colors.black87)),
-                  const SizedBox(height: 16),
-                  const Icon(Icons.qr_code_2, size: 64, color: Colors.black),
-                  const SizedBox(height: 4),
-                  Text(order.id.substring(0, 16), style: const TextStyle(fontFamily: 'Courier', fontSize: 10, color: Colors.black54)),
-                ],
+                ),
               ),
             ),
 
