@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
+import 'package:printing/printing.dart';
 import '../models/product_model.dart';
 import '../theme/app_theme.dart';
+
 
 class ReceiptPreviewModal extends StatelessWidget {
   final Order order;
@@ -184,7 +188,7 @@ class ReceiptPreviewModal extends StatelessWidget {
 
           // Bottom Action Bar (Dark background simulating the POS printer dock)
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
               decoration: const BoxDecoration(
                 color: AppColors.darkGray,
                 borderRadius: BorderRadius.only(bottomLeft: Radius.circular(16), bottomRight: Radius.circular(16)),
@@ -200,12 +204,31 @@ class ReceiptPreviewModal extends StatelessWidget {
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                       ),
                       onPressed: () => Navigator.pop(context),
-                      child: const Text('CLOSE', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                      child: const Text('CLOSE', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
                     ),
                   ),
-                  const SizedBox(width: 16),
+                  const SizedBox(width: 12),
                   Expanded(
-                    flex: 2,
+                    flex: 1,
+                    child: ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        foregroundColor: AppColors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        elevation: 2,
+                      ),
+                      icon: const Icon(Icons.download, size: 20),
+                      label: const Text('SAVE PDF', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
+                      onPressed: () async {
+                        Navigator.pop(context);
+                        await _savePdfReceiptDirectly(context);
+                      },
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    flex: 1,
                     child: ElevatedButton.icon(
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.accent,
@@ -214,22 +237,11 @@ class ReceiptPreviewModal extends StatelessWidget {
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                         elevation: 4,
                       ),
-                      icon: const Icon(Icons.print, size: 24),
-                      label: const Text('PRINT ESC/POS', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                      onPressed: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Row(
-                              children: [
-                                Icon(Icons.print, color: Colors.white),
-                                SizedBox(width: 12),
-                                Text('ESC/POS raw buffer sent to thermal printer port USB001.'),
-                              ],
-                            ),
-                            backgroundColor: Colors.green,
-                          ),
-                        );
+                      icon: const Icon(Icons.print, size: 20),
+                      label: const Text('PRINT', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
+                      onPressed: () async {
                         Navigator.pop(context);
+                        await _printPdfReceipt(context);
                       },
                     ),
                   ),
@@ -241,4 +253,158 @@ class ReceiptPreviewModal extends StatelessWidget {
       ),
     );
   }
+
+
+  pw.Document _generatePdfDocument() {
+    final String timestampStr = order.timestamp.toLocal().toString().substring(0, 16);
+    final String orNumber = 'OR# ${order.id.substring(0, 12).toUpperCase()}';
+
+    final doc = pw.Document();
+
+    doc.addPage(
+      pw.Page(
+        pageFormat: PdfPageFormat.roll80, // 80mm thermal roll format!
+        build: (pw.Context context) {
+          return pw.Column(
+            crossAxisAlignment: pw.CrossAxisAlignment.center,
+            children: [
+              pw.Text('PROJECT LATTE COFFEE', style: pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold)),
+              pw.SizedBox(height: 4),
+              pw.Text('123 Coffee Street, Diliman\nQuezon City, Metro Manila\nVAT REG TIN: 123-456-789-00000', textAlign: pw.TextAlign.center, style: const pw.TextStyle(fontSize: 10)),
+              pw.SizedBox(height: 12),
+              pw.Divider(borderStyle: pw.BorderStyle.dashed),
+              pw.SizedBox(height: 6),
+              pw.Row(
+                mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                children: [
+                  pw.Text(orNumber, style: pw.TextStyle(fontSize: 10, fontWeight: pw.FontWeight.bold)),
+                  pw.Text(timestampStr, style: const pw.TextStyle(fontSize: 10)),
+                ],
+              ),
+              pw.SizedBox(height: 4),
+              pw.Row(
+                mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                children: [
+                  pw.Text('CASHIER: Terminal 01', style: const pw.TextStyle(fontSize: 10)),
+                  pw.Text(order.scPwdId != null ? 'SC/PWD: ${order.scPwdId}' : 'CUSTOMER: Guest', style: const pw.TextStyle(fontSize: 10)),
+                ],
+              ),
+              pw.SizedBox(height: 6),
+              pw.Divider(borderStyle: pw.BorderStyle.dashed),
+              pw.SizedBox(height: 12),
+
+              // Items
+              ...order.items.map((item) {
+                return pw.Padding(
+                  padding: const pw.EdgeInsets.only(bottom: 8),
+                  child: pw.Column(
+                    crossAxisAlignment: pw.CrossAxisAlignment.start,
+                    children: [
+                      pw.Row(
+                        mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                        children: [
+                          pw.Expanded(child: pw.Text('${item.quantity}x ${item.product.name}', style: pw.TextStyle(fontSize: 11, fontWeight: pw.FontWeight.bold))),
+                          pw.Text('PHP ${item.getTotal().toStringAsFixed(2)}', style: pw.TextStyle(fontSize: 11, fontWeight: pw.FontWeight.bold)),
+                        ],
+                      ),
+                      pw.SizedBox(height: 2),
+                      pw.Text('   ${item.selectedSize.toUpperCase()} | ${item.selectedTemperature.toUpperCase()}', style: const pw.TextStyle(fontSize: 9)),
+                      if (item.selectedAddOns != null && item.selectedAddOns!.isNotEmpty)
+                        pw.Text('   Add-ons: ${item.selectedAddOns!.map((a) => a.name).join(", ")}', style: const pw.TextStyle(fontSize: 9, color: PdfColors.grey700)),
+                    ],
+                  ),
+                );
+              }),
+
+              pw.SizedBox(height: 6),
+              pw.Divider(borderStyle: pw.BorderStyle.dashed),
+              pw.SizedBox(height: 12),
+
+              // Totals
+              pw.Row(
+                mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                children: [
+                  pw.Text('SUBTOTAL (VAT Excl):', style: const pw.TextStyle(fontSize: 10)),
+                  pw.Text('PHP ${order.subtotal.toStringAsFixed(2)}', style: const pw.TextStyle(fontSize: 10)),
+                ],
+              ),
+              if (order.scPwdApplied) ...[
+                pw.SizedBox(height: 4),
+                pw.Row(
+                  mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                  children: [
+                    pw.Text('SC/PWD DISCOUNT (20%):', style: const pw.TextStyle(fontSize: 10)),
+                    pw.Text('-PHP ${order.discountAmount.toStringAsFixed(2)}', style: pw.TextStyle(fontSize: 10, fontWeight: pw.FontWeight.bold)),
+                  ],
+                ),
+              ],
+              pw.SizedBox(height: 4),
+              pw.Row(
+                mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                children: [
+                  pw.Text('12% VAT:', style: const pw.TextStyle(fontSize: 10)),
+                  pw.Text(order.scPwdApplied ? 'VAT Exempt' : 'PHP ${order.taxAmount.toStringAsFixed(2)}', style: const pw.TextStyle(fontSize: 10)),
+                ],
+              ),
+              pw.SizedBox(height: 6),
+              pw.Divider(borderStyle: pw.BorderStyle.dashed),
+              pw.SizedBox(height: 10),
+
+              pw.Row(
+                mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                children: [
+                  pw.Text('TOTAL AMOUNT DUE:', style: pw.TextStyle(fontSize: 12, fontWeight: pw.FontWeight.bold)),
+                  pw.Text('PHP ${order.total.toStringAsFixed(2)}', style: pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold)),
+                ],
+              ),
+              pw.SizedBox(height: 6),
+              pw.Row(
+                mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                children: [
+                  pw.Text('PAID VIA (${paymentMethod.split(" ")[0]}):', style: const pw.TextStyle(fontSize: 10)),
+                  pw.Text('PHP ${order.total.toStringAsFixed(2)}', style: const pw.TextStyle(fontSize: 10)),
+                ],
+              ),
+              pw.SizedBox(height: 12),
+              pw.Divider(borderStyle: pw.BorderStyle.dashed),
+              pw.SizedBox(height: 12),
+
+              pw.Text('THIS SERVES AS AN OFFICIAL RECEIPT', style: pw.TextStyle(fontSize: 8, fontWeight: pw.FontWeight.bold, color: PdfColors.grey700)),
+              pw.SizedBox(height: 4),
+              pw.Text('Thank you for having coffee with us!', style: const pw.TextStyle(fontSize: 9)),
+              pw.SizedBox(height: 16),
+              pw.BarcodeWidget(
+                barcode: pw.Barcode.qrCode(),
+                data: order.id,
+                width: 60,
+                height: 60,
+              ),
+              pw.SizedBox(height: 4),
+              pw.Text(order.id.substring(0, 16), style: const pw.TextStyle(fontSize: 8, color: PdfColors.grey700)),
+            ],
+          );
+        },
+      ),
+    );
+
+    return doc;
+  }
+
+  Future<void> _printPdfReceipt(BuildContext context) async {
+    final doc = _generatePdfDocument();
+    await Printing.layoutPdf(
+      onLayout: (PdfPageFormat format) async => doc.save(),
+      name: 'Receipt_${order.id.substring(0, 8)}',
+    );
+  }
+
+  Future<void> _savePdfReceiptDirectly(BuildContext context) async {
+    final doc = _generatePdfDocument();
+    final bytes = await doc.save();
+    await Printing.sharePdf(
+      bytes: bytes,
+      filename: 'Receipt_${order.id.substring(0, 8)}.pdf',
+    );
+  }
 }
+

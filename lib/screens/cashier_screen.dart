@@ -291,19 +291,19 @@ class _CashierScreenState extends State<CashierScreen> {
                       }
                       showDialog(
                         context: context,
-                        builder: (context) => PaymentModalDialog(
+                        builder: (modalContext) => PaymentModalDialog(
                           totalAmount: total,
                           onConfirm: (paymentMethod) async {
-                            Navigator.pop(context); // Close modal
+                            Navigator.pop(modalContext); // Close modal
                             final order = await orderProvider.processCheckout(paymentMethod);
                             if (order != null) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text('Order saved successfully!'),
-                                  backgroundColor: Colors.green,
-                                ),
-                              );
                               if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('Order saved successfully!'),
+                                    backgroundColor: Colors.green,
+                                  ),
+                                );
                                 showDialog(
                                   context: context,
                                   builder: (context) => ReceiptPreviewModal(
@@ -313,12 +313,14 @@ class _CashierScreenState extends State<CashierScreen> {
                                 );
                               }
                             } else {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text('Failed to save order.'),
-                                  backgroundColor: Colors.red,
-                                ),
-                              );
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('Failed to save order.'),
+                                    backgroundColor: Colors.red,
+                                  ),
+                                );
+                              }
                             }
                           },
                         ),
