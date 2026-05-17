@@ -25,7 +25,7 @@ final mockAddOns = [
 ];
 
 // Official Menu Products
-final mockProducts = [
+List<Product> mockProducts = [
   // ==================== CATEGORY C1: HOT COFFEE & DRINKS ====================
   Product(
     id: 'hc1',

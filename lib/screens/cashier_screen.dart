@@ -23,9 +23,10 @@ class CashierScreen extends StatefulWidget {
 class _CashierScreenState extends State<CashierScreen> {
   String selectedCategoryId = 'c1'; // Default to Hot Coffee
 
-  // Get products for selected category
-  List<Product> getDisplayProducts() {
-    return getProductsByCategory(selectedCategoryId);
+  // Get products for selected category from reactive OrderProvider
+  List<Product> getDisplayProducts(BuildContext context) {
+    final menuProducts = context.watch<OrderProvider>().menuProducts;
+    return menuProducts.where((p) => p.categoryId == selectedCategoryId).toList();
   }
 
   // Add item to order
@@ -277,13 +278,14 @@ class _CashierScreenState extends State<CashierScreen> {
                       crossAxisSpacing: 12,
                       mainAxisSpacing: 12,
                     ),
-                    itemCount: getDisplayProducts().length,
+                    itemCount: getDisplayProducts(context).length,
                     itemBuilder: (context, index) {
-                      final product = getDisplayProducts()[index];
+                      final product = getDisplayProducts(context)[index];
                       return ItemCard(
                         name: product.name,
                         description: product.description,
                         price: '₱${product.basePrice}',
+                        isAvailable: product.isAvailable,
                         onTap: () => addToOrder(product),
                       );
                     },

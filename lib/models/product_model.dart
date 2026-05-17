@@ -43,6 +43,30 @@ class Product {
     }
     return basePrice; 
   }
+
+  Product copyWith({
+    String? id,
+    String? name,
+    String? description,
+    double? basePrice,
+    String? categoryId,
+    List<String>? availableSizes,
+    List<String>? availableTemperatures,
+    List<AddOn>? addOns,
+    bool? isAvailable,
+  }) {
+    return Product(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      description: description ?? this.description,
+      basePrice: basePrice ?? this.basePrice,
+      categoryId: categoryId ?? this.categoryId,
+      availableSizes: availableSizes ?? this.availableSizes,
+      availableTemperatures: availableTemperatures ?? this.availableTemperatures,
+      addOns: addOns ?? this.addOns,
+      isAvailable: isAvailable ?? this.isAvailable,
+    );
+  }
 }
 
 class AddOn {

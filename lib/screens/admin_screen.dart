@@ -3,7 +3,11 @@ import 'package:intl/intl.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
+import 'package:provider/provider.dart';
 import '../data/database.dart';
+import '../data/mock_menu.dart';
+import '../models/product_model.dart';
+import '../providers/order_provider.dart';
 import '../services/order_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/latte_components.dart';
@@ -34,6 +38,10 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
   final TextEditingController _tinController = TextEditingController(text: '123-456-789-00000');
   final TextEditingController _vatRateController = TextEditingController(text: '12');
   final TextEditingController _pwdDiscountController = TextEditingController(text: '20');
+
+  // Menu Management State
+  String _menuSearchQuery = '';
+  String _menuCategoryFilter = 'All';
 
   @override
   void initState() {
@@ -94,7 +102,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
         children: [
           // SIDEBAR NAVIGATION RAIL
           Container(
-            width: 220,
+            width: 250,
             color: AppColors.white,
             child: Column(
               children: [
@@ -113,6 +121,11 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
                   icon: Icons.settings_outlined,
                   label: 'System Settings',
                   index: 2,
+                ),
+                _buildSidebarItem(
+                  icon: Icons.fastfood_outlined,
+                  label: 'Menu Management',
+                  index: 3,
                 ),
                 const Spacer(),
                 const Divider(),
@@ -159,11 +172,14 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
           children: [
             Icon(icon, color: isSelected ? AppColors.primary : AppColors.mediumGray, size: 24),
             const SizedBox(width: 16),
-            Text(
-              label,
-              style: AppTypography.labelMedium.copyWith(
-                color: isSelected ? AppColors.primary : AppColors.darkGray,
-                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+            Expanded(
+              child: Text(
+                label,
+                style: AppTypography.labelMedium.copyWith(
+                  color: isSelected ? AppColors.primary : AppColors.darkGray,
+                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                ),
+                overflow: TextOverflow.ellipsis,
               ),
             ),
           ],
@@ -180,6 +196,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
         return _buildExportsTab();
       case 2:
         return _buildSettingsTab();
+      case 3:
+        return _buildMenuManagementTab();
       default:
         return const Center(child: Text('Unknown Tab'));
     }
@@ -679,6 +697,386 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: AppColors.mediumGray.withValues(alpha: 0.3))),
         enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: AppColors.mediumGray.withValues(alpha: 0.3))),
         focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppColors.primary, width: 2)),
+      ),
+    );
+  }
+
+  // ==================== 4. MENU MANAGEMENT TAB ====================
+  Widget _buildMenuManagementTab() {
+    final menuProducts = context.watch<OrderProvider>().menuProducts;
+    final filteredProducts = menuProducts.where((p) {
+      final matchesSearch = p.name.toLowerCase().contains(_menuSearchQuery.toLowerCase()) ||
+                            p.description.toLowerCase().contains(_menuSearchQuery.toLowerCase());
+      final matchesCategory = _menuCategoryFilter == 'All' || p.categoryId == _menuCategoryFilter;
+      return matchesSearch && matchesCategory;
+    }).toList();
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(32),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Menu & Product Management', style: AppTypography.h1),
+                  const SizedBox(height: 8),
+                  Text('Add, edit, delete, and toggle real-time availability of cafe products', style: AppTypography.bodyRegular),
+                ],
+              ),
+              ElevatedButton.icon(
+                icon: const Icon(Icons.add, color: AppColors.white),
+                label: const Text('ADD NEW PRODUCT', style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.white)),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+                onPressed: () => _showProductModal(),
+              ),
+            ],
+          ),
+          const SizedBox(height: 32),
+
+          // Search & Filter Bar
+          Row(
+            children: [
+              Expanded(
+                flex: 2,
+                child: TextField(
+                  style: AppTypography.bodyRegular,
+                  decoration: InputDecoration(
+                    hintText: 'Search products by name or description...',
+                    prefixIcon: const Icon(Icons.search, color: AppColors.mediumGray),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: AppColors.mediumGray.withValues(alpha: 0.3))),
+                    enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: AppColors.mediumGray.withValues(alpha: 0.3))),
+                    focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppColors.primary, width: 2)),
+                  ),
+                  onChanged: (val) => setState(() => _menuSearchQuery = val),
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                flex: 1,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                  decoration: BoxDecoration(
+                    border: Border.all(color: AppColors.mediumGray.withValues(alpha: 0.3)),
+                    borderRadius: BorderRadius.circular(12),
+                    color: AppColors.white,
+                  ),
+                  child: DropdownButtonHideUnderline(
+                    child: DropdownButton<String>(
+                      value: _menuCategoryFilter,
+                      isExpanded: true,
+                      style: AppTypography.bodyRegular.copyWith(color: AppColors.darkGray),
+                      items: const [
+                        DropdownMenuItem(value: 'All', child: Text('All Categories')),
+                        DropdownMenuItem(value: 'c1', child: Text('Hot Coffee')),
+                        DropdownMenuItem(value: 'c2', child: Text('Iced Coffee')),
+                        DropdownMenuItem(value: 'c3', child: Text('Non-Coffee')),
+                        DropdownMenuItem(value: 'c4', child: Text('Frappes')),
+                        DropdownMenuItem(value: 'c5', child: Text('Refreshers')),
+                        DropdownMenuItem(value: 'c6', child: Text('Food & Snacks')),
+                      ],
+                      onChanged: (val) {
+                        if (val != null) setState(() => _menuCategoryFilter = val);
+                      },
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 24),
+
+          // Products Table / List View
+          Card(
+            color: AppColors.white,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            child: ListView.separated(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: filteredProducts.length,
+              separatorBuilder: (context, index) => Divider(height: 1, color: AppColors.mediumGray.withValues(alpha: 0.2)),
+              itemBuilder: (context, index) {
+                final product = filteredProducts[index];
+                final categoryNames = {
+                  'c1': 'Hot Coffee', 'c2': 'Iced Coffee', 'c3': 'Non-Coffee',
+                  'c4': 'Frappes', 'c5': 'Refreshers', 'c6': 'Food & Snacks',
+                };
+
+                return Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                  child: Row(
+                    children: [
+                      // Leading Icon
+                      Container(
+                        width: 48, height: 48,
+                        decoration: BoxDecoration(color: AppColors.accent.withValues(alpha: 0.2), borderRadius: BorderRadius.circular(8)),
+                        child: const Icon(Icons.coffee, color: AppColors.accent),
+                      ),
+                      const SizedBox(width: 16),
+                      
+                      // Title & Subtitle (Wrapped in Expanded so it gracefully truncates!)
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Flexible(child: Text(product.name, style: AppTypography.bodyLarge.copyWith(fontWeight: FontWeight.bold), overflow: TextOverflow.ellipsis)),
+                                const SizedBox(width: 12),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                  decoration: BoxDecoration(color: AppColors.lightGray, borderRadius: BorderRadius.circular(12)),
+                                  child: Text(categoryNames[product.categoryId] ?? 'Other', style: AppTypography.labelMedium.copyWith(fontSize: 12)),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 4),
+                            Text(product.description, style: AppTypography.bodySmall, maxLines: 1, overflow: TextOverflow.ellipsis),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+
+                      // Price
+                      Text('₱${product.basePrice.toStringAsFixed(2)}', style: AppTypography.priceTag.copyWith(fontSize: 16)),
+                      const SizedBox(width: 20),
+
+                      // Availability Switch
+                      Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Switch(
+                            value: product.isAvailable,
+                            activeColor: AppColors.success,
+                            onChanged: (val) {
+                              context.read<OrderProvider>().updateProduct(product.copyWith(isAvailable: val));
+                              ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                                content: Text('${product.name} is now ${val ? "Available" : "Unavailable"}'),
+                                backgroundColor: val ? AppColors.success : AppColors.error,
+                                duration: const Duration(seconds: 1),
+                              ));
+                            },
+                          ),
+                          Text(product.isAvailable ? 'Available' : 'Unavailable', style: AppTypography.labelMedium.copyWith(fontSize: 10, color: product.isAvailable ? AppColors.success : AppColors.error)),
+                        ],
+                      ),
+                      const SizedBox(width: 12),
+
+                      // Action Buttons
+                      IconButton(
+                        icon: const Icon(Icons.edit_outlined, color: AppColors.primary),
+                        tooltip: 'Edit Product',
+                        onPressed: () => _showProductModal(product),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.delete_outline, color: AppColors.error),
+                        tooltip: 'Delete Product',
+                        onPressed: () {
+                          showDialog(
+                            context: context,
+                            builder: (context) => AlertDialog(
+                              title: const Text('Delete Product?'),
+                              content: Text('Are you sure you want to delete ${product.name}? This action cannot be undone.'),
+                              actions: [
+                                TextButton(onPressed: () => Navigator.pop(context), child: const Text('CANCEL')),
+                                ElevatedButton(
+                                  style: ElevatedButton.styleFrom(backgroundColor: AppColors.error, foregroundColor: AppColors.white),
+                                  onPressed: () {
+                                    context.read<OrderProvider>().deleteProduct(product.id);
+                                    Navigator.pop(context);
+                                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('${product.name} deleted'), backgroundColor: AppColors.error));
+                                  },
+                                  child: const Text('DELETE'),
+                                ),
+                              ],
+                            ),
+                          );
+                        },
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showProductModal([Product? product]) {
+    final isEdit = product != null;
+    final nameController = TextEditingController(text: product?.name ?? '');
+    final descController = TextEditingController(text: product?.description ?? '');
+    final priceController = TextEditingController(text: product?.basePrice.toString() ?? '');
+    String selectedCategory = product?.categoryId ?? 'c1';
+    List<String> selectedSizes = product?.availableSizes != null ? List.from(product!.availableSizes) : ['Small', 'Medium'];
+    List<String> selectedTemps = product?.availableTemperatures != null ? List.from(product!.availableTemperatures) : ['Hot'];
+
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setModalState) {
+          return Dialog(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            child: Container(
+              width: 600,
+              padding: const EdgeInsets.all(32),
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(isEdit ? 'Edit Product' : 'Add New Product', style: AppTypography.h2),
+                        IconButton(icon: const Icon(Icons.close), onPressed: () => Navigator.pop(context)),
+                      ],
+                    ),
+                    const SizedBox(height: 24),
+                    TextField(
+                      controller: nameController,
+                      decoration: InputDecoration(labelText: 'Product Name', border: OutlineInputBorder(borderRadius: BorderRadius.circular(12))),
+                    ),
+                    const SizedBox(height: 16),
+                    TextField(
+                      controller: descController,
+                      decoration: InputDecoration(labelText: 'Description', border: OutlineInputBorder(borderRadius: BorderRadius.circular(12))),
+                      maxLines: 2,
+                    ),
+                    const SizedBox(height: 16),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextField(
+                            controller: priceController,
+                            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                            decoration: InputDecoration(labelText: 'Base Price (₱)', border: OutlineInputBorder(borderRadius: BorderRadius.circular(12))),
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: DropdownButtonFormField<String>(
+                            value: selectedCategory,
+                            decoration: InputDecoration(labelText: 'Category', border: OutlineInputBorder(borderRadius: BorderRadius.circular(12))),
+                            items: const [
+                              DropdownMenuItem(value: 'c1', child: Text('Hot Coffee')),
+                              DropdownMenuItem(value: 'c2', child: Text('Iced Coffee')),
+                              DropdownMenuItem(value: 'c3', child: Text('Non-Coffee')),
+                              DropdownMenuItem(value: 'c4', child: Text('Frappes')),
+                              DropdownMenuItem(value: 'c5', child: Text('Refreshers')),
+                              DropdownMenuItem(value: 'c6', child: Text('Food & Snacks')),
+                            ],
+                            onChanged: (val) {
+                              if (val != null) setModalState(() => selectedCategory = val);
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 24),
+                    Text('Available Sizes', style: AppTypography.labelMedium),
+                    Row(
+                      children: ['Small', 'Medium', 'Large'].map((size) {
+                        return Expanded(
+                          child: CheckboxListTile(
+                            title: Text(size, style: AppTypography.bodyRegular),
+                            value: selectedSizes.contains(size),
+                            activeColor: AppColors.primary,
+                            onChanged: (val) {
+                              setModalState(() {
+                                if (val == true) {
+                                  selectedSizes.add(size);
+                                } else {
+                                  selectedSizes.remove(size);
+                                }
+                              });
+                            },
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                    const SizedBox(height: 16),
+                    Text('Available Temperatures', style: AppTypography.labelMedium),
+                    Row(
+                      children: ['Hot', 'Iced', 'Ice Blended'].map((temp) {
+                        return Expanded(
+                          child: CheckboxListTile(
+                            title: Text(temp, style: AppTypography.bodyRegular),
+                            value: selectedTemps.contains(temp),
+                            activeColor: AppColors.primary,
+                            onChanged: (val) {
+                              setModalState(() {
+                                if (val == true) {
+                                  selectedTemps.add(temp);
+                                } else {
+                                  selectedTemps.remove(temp);
+                                }
+                              });
+                            },
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                    const SizedBox(height: 32),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 50,
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary, foregroundColor: AppColors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+                        onPressed: () {
+                          if (nameController.text.trim().isEmpty || priceController.text.trim().isEmpty) {
+                            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please enter a name and base price'), backgroundColor: AppColors.error));
+                            return;
+                          }
+                          final double price = double.tryParse(priceController.text.trim()) ?? 0.0;
+                          final orderProvider = context.read<OrderProvider>();
+                          
+                          if (isEdit) {
+                            orderProvider.updateProduct(product.copyWith(
+                              name: nameController.text.trim(),
+                              description: descController.text.trim(),
+                              basePrice: price,
+                              categoryId: selectedCategory,
+                              availableSizes: selectedSizes,
+                              availableTemperatures: selectedTemps,
+                            ));
+                            Navigator.pop(context);
+                            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('${nameController.text} updated successfully!'), backgroundColor: AppColors.success));
+                          } else {
+                            final newProduct = Product(
+                              id: 'p_${DateTime.now().millisecondsSinceEpoch}',
+                              name: nameController.text.trim(),
+                              description: descController.text.trim(),
+                              basePrice: price,
+                              categoryId: selectedCategory,
+                              availableSizes: selectedSizes.isEmpty ? ['Medium'] : selectedSizes,
+                              availableTemperatures: selectedTemps.isEmpty ? ['Hot'] : selectedTemps,
+                              addOns: mockProducts.isNotEmpty ? mockProducts.first.addOns : [],
+                              isAvailable: true,
+                            );
+                            orderProvider.addProduct(newProduct);
+                            Navigator.pop(context);
+                            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('${newProduct.name} added to menu!'), backgroundColor: AppColors.success));
+                          }
+                        },
+                        child: Text(isEdit ? 'SAVE CHANGES' : 'ADD PRODUCT', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        },
       ),
     );
   }
