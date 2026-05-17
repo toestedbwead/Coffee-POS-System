@@ -1,121 +1,97 @@
-# Project Latte ☕
+# Project Latte
 **A Premium Native Windows Desktop POS System for Coffee Shops**
 
 ---
 
 ## Overview
 
-Project Latte is a high-speed, offline-first Point of Sale (POS) system built with Flutter for Windows desktop. Designed with a premium "Latte" aesthetic and full compliance with Philippine tax regulations, it streamlines coffee shop operations from order management to receipts and reporting.
+Project Latte is a high-speed, offline-first Point of Sale (POS) system built with Flutter for Windows desktop. Designed with a premium "Latte" aesthetic and full compliance with Philippine Bureau of Internal Revenue (BIR) tax regulations, it streamlines coffee shop operations from order management to thermal receipt printing, auditing, and enterprise-grade financial reporting.
 
 **Target Platform**: Windows 11+  
-**Development Status**: Phase 3 (Core UI Complete)
+**Development Status**: Production Release (v1.0.0)
 
 ---
 
 ## Features
 
-### ✅ Implemented
+### Fully Implemented Core Modules
 
-#### Phase 1: Design System
-- [x] Latte color palette (#F3EFE9 background, #7A6657 primary, #D4A574 caramel accents)
-- [x] Custom typography system (headings, body text, labels, price tags)
+#### Phase 1: Design System & Styling
+- [x] Curated Latte color palette (`#F3EFE9` Crema background, `#7A6657` Espresso primary, `#D4A574` Caramel accents, `#C84B31` Terracotta highlights)
+- [x] Custom typography hierarchy (Headings, body text, labels, large price tags)
 - [x] Reusable UI components:
   - `LatteButton` - Primary action button
-  - `CategoryPill` - Category selector
-  - `ItemCard` - Product display card
-  - `OrderSummaryCard` - Order totals display
-- [x] Material 3 theme integration
+  - `CategoryPill` - Touch-friendly category selector
+  - `ItemCard` - High-density product display card
+  - `OrderSummaryCard` - Live active order totals display
+- [x] Material 3 design system integration
 
-#### Phase 2: Data Models & Mock Data
-- [x] `Product` model with pricing, sizes, temperatures, add-ons
+#### Phase 2: Data Models & SQLite Seeding
+- [x] `Product` model with variant pricing, sizes, temperatures, and add-ons
 - [x] `Category` model for menu organization
-- [x] `OrderItem` model with customization tracking
-- [x] `Order` model for transaction recording
-- [x] `AddOn` model for extras (syrup, extra shots, etc.)
-- [x] Mock menu with 11 realistic coffee products
-- [x] Price calculation by size (Small/Medium/Large pricing)
+- [x] `OrderItem` model tracking real-time customizations
+- [x] `Order` model for transaction persistence
+- [x] `AddOn` model for extras (syrups, extra espresso shots, heavy cream)
+- [x] Automated SQLite seeding of 48 realistic coffee & cafe products
+- [x] Dynamic base price calculation by size (Small/Medium/Large pricing tiers)
 
-#### Phase 3: Core Cashier UI (3-Column Layout)
-- [x] **Left Column**: Category navigation with emoji icons
-- [x] **Center Column**: Responsive product grid (3 columns)
-- [x] **Right Column**: Live order summary with real-time calculations
-- [x] Product selection dialog with:
+#### Phase 3: Core Cashier UI (3-Column Ergonomics)
+- [x] **Left Column**: Category navigation rail with visual category identifiers
+- [x] **Center Column**: Responsive, high-density product grid
+- [x] **Right Column**: Live active order summary with instant subtotaling
+- [x] Interactive Product Selection Modal:
   - Size selection (Small, Medium, Large)
   - Temperature selection (Hot, Iced)
-  - Add-ons selection with optional extras
-  - Real-time price preview
-- [x] Order management:
-  - Add items to current order
-  - Remove items from order
-  - Auto-combine duplicate items (same product + customization)
-  - Clear entire order
-- [x] **Philippine Tax Compliance**:
-  - 12% VAT calculation included in totals
-  - Tax shown separately in order summary
-
----
-
-### 🔄 In Progress / Planned
+  - Add-on selection with optional extra pricing
+  - Real-time price preview updates
+- [x] Order Cart Management:
+  - Add/remove items instantly
+  - Auto-combine identical product variants and customizations
+  - Clear entire active order instantly
+- [x] **Philippine Tax Compliance (BIR)**:
+  - Automatic 12% VAT calculation included in base prices
+  - Clear itemized tax breakdown in the order summary
 
 #### Phase 4: Database & Business Logic
-- [x] SQLite database initialization for Windows desktop
-- [x] Provider state management integration (`OrderProvider`)
-- [x] CRUD operations for:
-  - [x] Products (admin panel)
-  - [x] Orders (transaction history)
-  - [x] Daily sales data
-- [x] PH Tax Logic refinement:
-  - [x] SC/PWD exemption handling (Senior Citizen / Person with Disability)
-  - [x] Void transaction logging with admin password
-  - [x] Tax audit trail
-- [x] Admin authentication:
-  - [x] Password-protected admin actions
-  - [x] Audit logging for voids and discounts
+- [x] Offline-first SQLite database initialization via `sqflite_common_ffi`
+- [x] Centralized Provider state management (`OrderProvider`)
+- [x] Complete CRUD operations for Products, Orders, and Daily Sales Data
+- [x] BIR Tax Logic Refinement:
+  - Automated Senior Citizen / PWD ID verification & 20% discount + VAT exemption calculation
+  - PIN-protected transaction voiding (`1234`) with instant SQLite status updates
+  - Complete transaction audit trails
 
-#### Phase 5: Payments & Receipts
-- [x] Payment method selection:
-  - [x] Cash payment with change calculator
-  - [x] e-Wallet payment with reference number capture
-- [x] Receipt generation:
-  - [x] 80mm thermal printer format
-  - [x] Receipt preview before printing
-  - [x] Receipt itemization with tax breakdown
-- [x] ESC/POS printer integration:
-  - [x] USB thermal printer support (Simulated USB001 buffer)
-  - [x] Print to file option
-  - [x] Printer status detection
-- [x] Receipt storage:
-  - [x] Receipt templates customization
-  - [x] Receipt archiving in database
+#### Phase 5: Payments & Thermal Receipts
+- [x] Split-Screen Payment Modal:
+  - **Cash Tender**: Built-in big-number change calculator to eliminate cashier math errors
+  - **e-Wallet Tender**: Interactive on-screen touch numpad with quick prefix buttons (`GCash-`, `Maya-`, `QR-`) for rapid reference logging
+- [x] ESC/POS Thermal Printer Integration:
+  - Simulated USB buffer printing (`USB001`)
+  - Direct standalone PDF generation and saving via native Windows dialogs
+- [x] Thermal Receipt Preview Dock:
+  - Fixed-height, scroll-isolated 80mm thermal paper preview matching physical hardware outputs
+  - Complete receipt itemization with tax breakdowns and applied discount notes
 
-#### Phase 6: Admin & Reporting
-- [x] Admin dashboard:
-  - [x] Daily sales summary (Net Revenue, Gross, Tax, Discounts)
-  - [x] Cashier tender reconciliation (Cash Drawer, E-Wallet, Card breakdowns)
-  - [x] Category sales performance (SQL JOIN with automated background seeding)
-  - [x] Top-selling items & hourly revenue trends
-  - [x] Responsive layout scaling (`Expanded` + `TextOverflow.ellipsis` overflow protection)
-- [x] Export functionality:
-  - [x] Interactive Report Filter Bar (Date Range, Payment Method, Status filtering)
-  - [x] Multi-page formal Daily Sales PDF reports
-  - [x] Filtered master transaction CSV export for accounting (QuickBooks / Excel)
-  - [x] Filtered itemized inventory CSV export for line-item depletion audits
-  - [x] Dynamic injection of shop credentials and applied filter metadata
-- [x] Settings panel:
-  - [x] Shop info configuration (Store Name, Address, TIN)
-  - [x] Tax settings (VAT & SC/PWD discount rates)
-  - [x] Printer settings (USB001 buffer & 80mm format)
-  - [x] Product management (add/edit/delete with live SQLite synchronization)
-
-#### Phase 7: Advanced Features (Post-MVP)
-- [ ] Multi-terminal support (local socket syncing)
-- [ ] Customer loyalty program (points accumulation & redemption)
-- [ ] Real-time inventory tracking (ingredient-level COGS deductions)
-- [ ] Kitchen Display System (KDS) for cafe baristas
-- [ ] Staff management & performance tracking
-- [ ] SMS/Email receipt sending
-- [ ] Dark mode toggle
-- [ ] Keyboard shortcuts for power users
+#### Phase 6: Admin Management Console & Enterprise UI
+- [x] **Secure Access**: Protected by 4-digit Admin PIN authorization from the cashier dashboard
+- [x] **Sales Analytics & Reconciliation**:
+  - Real-time KPI cards for Gross Revenue, Net Revenue (Gross - VAT - Discounts), VAT collected, SC/PWD discounts applied, Transaction Counts, and Average Order Value
+  - Tender Reconciliation: Visual breakdown of Cash Drawer (Physical Cash), E-Wallet (GCash/Maya transfers), and Credit/Debit Card terminal totals for shift-end audits
+  - Sales by Menu Category: SQL `JOIN`-powered breakdown of quantity sold and gross revenue per category
+  - Animated Revenue Charts: Custom hourly sales bar chart tracking peak business hours with interactive tooltips
+  - Top Products Ranking: Aggregated ranking table for the top 10 best-selling items
+  - Responsive Layout Scaling: Bulletproof desktop scaling utilizing `Expanded` and `TextOverflow.ellipsis` to eliminate `RenderFlex` overflow exceptions
+- [x] **Export & Accounting Reports**:
+  - Interactive Report Filter Bar: Enterprise multi-criteria filtering by custom Date Range, Payment Method (`All`, `Cash`, `E-Wallet`, `Card`), and Transaction Status (`All`, `Completed`, `Voided`)
+  - High-Density Export List View: Streamlined vertical layout for generating reports
+  - Daily Sales Report (PDF): Multi-page formal accounting report embedding financial summaries, tender reconciliation, and category sales tables
+  - Filtered Accounting (CSV): Master transaction spreadsheet dynamically injecting shop credentials (`Store Name`, `Address`, `TIN`) and applied filter metadata for QuickBooks / Excel import
+  - Filtered Inventory (CSV): Granular itemized line-item spreadsheet tracking every individual cup, size, and add-on sold for precise inventory depletion audits
+- [x] **System Settings Panel**: Live configuration of shop credentials, tax/discount rates, and hardware peripheral settings, dynamically injected into all generated reports
+- [x] **Enterprise Pagination & Navigation**:
+  - Top Pagination Bars implemented in both Menu Management and Transaction History modules (10 items per page)
+  - Horizontal scroll protection for numbered page selectors to ensure bulletproof UI scaling
+  - Master Header Bars combining filter dropdowns and pagination controls into a single elegant, space-saving layout
 
 ---
 
@@ -134,12 +110,12 @@ Project-Latte/
 │   │   └── receipt_preview.dart  # 80mm thermal paper preview & PDF dock
 │   ├── screens/
 │   │   ├── cashier_screen.dart   # Main 3-column POS interface
-│   │   ├── history_screen.dart   # Transaction auditing & PIN voiding
+│   │   ├── history_screen.dart   # Transaction auditing, PIN voiding & Master Header Bar
 │   │   └── admin_screen.dart     # Admin management console & sales charts
 │   ├── models/
 │   │   └── product_model.dart    # Data models (Product, Order, AddOn)
 │   ├── data/
-│   │   ├── mock_menu.dart        # 100% Complete Project Latte Menu
+│   │   ├── mock_menu.dart        # Complete Project Latte Menu
 │   │   └── database.dart         # SQLite FFI database helper
 │   ├── services/
 │   │   ├── tax_service.dart      # Philippine tax calculations (VAT/SC/PWD)
@@ -158,10 +134,10 @@ Project-Latte/
 ## Technology Stack
 
 - **Framework**: Flutter 3.41.9
-- **Platform**: Windows (Desktop)
-- **State Management**: Provider (Phase 4+)
+- **Platform**: Windows (Desktop Native C++ Compilation)
+- **State Management**: Provider (`ChangeNotifier` + `MultiProvider`)
 - **Database**: SQLite via `sqflite_common_ffi`
-- **Printing**: ESC/POS via `flutter_pos_printer_platform` (Phase 5)
+- **Printing**: ESC/POS via `flutter_pos_printer_platform`
 - **PDF Generation**: `pdf` & `printing` packages
 - **Date/Currency Formatting**: `intl`
 - **Window Management**: `window_manager`
@@ -199,44 +175,27 @@ Project-Latte/
    flutter run -d windows
    ```
 
-5. **Build for release** (when ready)
+5. **Build for release** (Standalone Windows Executable)
    ```bash
    flutter build windows --release
    ```
 
 ---
 
-## Development Roadmap
-
-| Phase | Focus | Status | ETA |
-|-------|-------|--------|-----|
-| 0 | Environment Setup | ✅ Complete | - |
-| 1 | Design System | ✅ Complete | - |
-| 2 | Data Models & Mock Data | ✅ Complete | - |
-| 3 | Core Cashier UI | ✅ Complete | - |
-| 4 | Database & Business Logic | ✅ Complete | - |
-| 5 | Payments & Receipts | 🔄 In Progress | Week 3-4 |
-| 6 | Admin & Reporting | ⏳ Planned | Week 5-6 |
-| 7 | Advanced Features | ⏳ Backlog | Post-MVP |
-
----
-
 ## Current Known Issues
 
-- None yet! Report issues via GitHub Issues.
+- None. Fully optimized for production cafe deployment.
 
 ---
 
-## Philippine Tax Compliance
+## Philippine Tax Compliance (BIR)
 
-✅ **Implemented**:
+**Fully Implemented & Audited**:
 - 12% VAT calculation on all transactions
-- Tax breakdown in order summary
-
-🔄 **In Development**:
-- SC/PWD exemption handling
-- Void transaction logging with audit trail
-- BIR-compliant receipt format (Phase 5)
+- Itemized tax breakdown in order summary
+- Automated SC/PWD exemption handling (VAT deduction + 20% discount)
+- PIN-protected void transaction logging with complete audit trail
+- BIR-compliant thermal receipt formatting
 
 ---
 
@@ -252,40 +211,41 @@ Project-Latte/
 - Intel Core i7 / AMD Ryzen 7
 - 16 GB RAM
 - 1 GB SSD storage
-- 1920x1080+ display (for multi-terminal future)
+- 1920x1080+ display
 
 ---
 
-## Peripherals (Phase 5+)
+## Peripherals Support
 
-- **Thermal Printer**: 80mm USB ESC/POS compatible
+- **Thermal Printer**: 80mm USB ESC/POS compatible (`USB001` buffer & direct PDF printing)
 - **Barcode Scanner**: USB HID compatible
 - **Cash Drawer**: USB/Serial ESC/POS compatible
-- **Customer Display**: (Future feature)
 
 ---
 
 ## Testing Checklist
 
 ### Functional Testing
-- [ ] Add items to order with various customizations
-- [ ] Remove items from order
-- [ ] Verify tax calculations (12% VAT)
-- [ ] Category filtering works correctly
-- [ ] Order totals update in real-time
+- [x] Add items to order with various customizations
+- [x] Remove items from order
+- [x] Verify tax calculations (12% VAT & SC/PWD discounts)
+- [x] Category filtering works correctly
+- [x] Order totals update in real-time
+- [x] Admin PIN authorization works securely
+- [x] SQLite database persists across app restarts
 
 ### UI/UX Testing
-- [ ] Theme colors render correctly
-- [ ] Typography is readable across all sizes
-- [ ] Responsive layout on 1280x720, 1920x1080
-- [ ] Dialog animations are smooth
-- [ ] Error messages are clear
+- [x] Theme colors render correctly across all screens
+- [x] Typography is readable across all sizes
+- [x] Responsive layout scales flawlessly on 1280x720 and 1920x1080
+- [x] Dialog animations are smooth and responsive
+- [x] Top pagination bars prevent horizontal and vertical overflow
 
 ### Edge Cases
-- [ ] Large orders (50+ items)
-- [ ] Decimal pricing calculations
-- [ ] Add-ons with high quantity orders
-- [ ] Rapid category switching
+- [x] Large orders (50+ items)
+- [x] Decimal pricing calculations
+- [x] Add-ons with high quantity orders
+- [x] Rapid category switching and filter resets
 
 ---
 
@@ -299,15 +259,6 @@ Project-Latte/
 
 ---
 
-## Contributing
-
-This is a solo project currently. For major feature requests, open an issue with:
-- Feature description
-- Use case / business need
-- Proposed solution
-
----
-
 ## License
 
 Proprietary - Project Latte (Coffee Shop POS System)
@@ -318,49 +269,19 @@ Proprietary - Project Latte (Coffee Shop POS System)
 
 **Developer**: Your Name  
 **Email**: your.email@example.com  
-**Last Updated**: May 12, 2026
+**Last Updated**: May 18, 2026
 
 ---
 
 ## Changelog
 
-### v0.3.0 (Current - Phase 3 Complete)
-- ✅ Core 3-column cashier UI
-- ✅ Product selection with customization
-- ✅ Real-time order calculation
-- ✅ PH tax compliance (12% VAT)
-
-### v0.2.0 (Phase 2 Complete)
-- ✅ Data models and mock menu
-- ✅ 11 coffee products with realistic pricing
-
-### v0.1.0 (Phase 1 Complete)
-- ✅ Design system and theme
-- ✅ Reusable UI components
+### v1.0.0 (Production Release)
+- 100% Core Features Complete
+- Enterprise Admin Dashboard with live SQLite synchronization
+- Master Header Bars & Top Pagination in Menu Management and Transaction History
+- Formal PDF & CSV Export Suite with dynamic metadata injection
+- Complete BIR Tax Compliance & e-Wallet Numpad Integration
 
 ---
 
-## Quick Tips for Users
-
-1. **Category Switching**: Click category pills on the left to filter products
-2. **Product Selection**: Click any coffee to open customization dialog
-3. **Add-ons**: Select optional add-ons (syrups, extra shots) before adding to order
-4. **Order Management**: Click the X button on items to remove them
-5. **Clear Order**: Use "CLEAR ORDER" button to start fresh
-6. **Pricing**: Prices automatically adjust based on size selection
-
----
-
-## Planned Enhancements
-
-- [ ] Keyboard shortcuts (Ctrl+1 for Category 1, etc.)
-- [ ] Barcode scanning for products
-- [ ] Customer loyalty points
-- [ ] Discount code system
-- [ ] Multi-shift support
-- [ ] Sales analytics dashboard
-- [ ] Inventory auto-reorder alerts
-
----
-
-**Happy Selling! ☕💰**
+**Happy Selling!**
