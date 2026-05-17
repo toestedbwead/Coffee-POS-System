@@ -136,7 +136,20 @@ class _CashierScreenState extends State<CashierScreen> {
     }
   }
 
-
+  Widget _buildCleanHeaderButton({required IconData icon, required String label, required VoidCallback onTap}) {
+    return OutlinedButton.icon(
+      onPressed: onTap,
+      icon: Icon(icon, size: 20, color: AppColors.primary),
+      label: Text(label, style: AppTypography.labelMedium.copyWith(color: AppColors.primary)),
+      style: OutlinedButton.styleFrom(
+        foregroundColor: AppColors.primary,
+        side: BorderSide(color: AppColors.primary.withValues(alpha: 0.3), width: 1.5),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        backgroundColor: AppColors.white,
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -149,38 +162,93 @@ class _CashierScreenState extends State<CashierScreen> {
     final isSCPWD = orderProvider.applySCPWD;
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Kape Ka\'Pre?'),
-        centerTitle: true,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.history_sharp, size: 28),
-            tooltip: 'Transaction History',
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const TransactionHistoryScreen(),
-                ),
-              );
-            },
-          ),
-          const SizedBox(width: 8),
-          IconButton(
-            icon: const Icon(Icons.admin_panel_settings, size: 28),
-            tooltip: 'Admin Console',
-            onPressed: _openAdminConsole,
-          ),
-          const SizedBox(width: 16),
-        ],
-      ),
-
-      body: Row(
+      backgroundColor: AppColors.white,
+      body: Column(
         children: [
+          // SLEEK, MINIMALIST DESKTOP HEADER
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+            decoration: BoxDecoration(
+              color: AppColors.background,
+              border: Border.all(
+                color: AppColors.primary.withValues(alpha: 0.15),
+                width: 1,
+              ),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                // Left Brand Presentation
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: AppColors.white,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: AppColors.primary.withValues(alpha: 0.2)),
+                      ),
+                      child: const Icon(Icons.coffee_rounded, color: AppColors.primary, size: 24),
+                    ),
+                    const SizedBox(width: 16),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Text(orderProvider.storeName, style: AppTypography.h2.copyWith(color: AppColors.primary)),
+                            const SizedBox(width: 12),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: AppColors.accent.withValues(alpha: 0.15),
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(color: AppColors.accent.withValues(alpha: 0.3)),
+                              ),
+                              child: Text(
+                                'CASHIER DESK',
+                                style: AppTypography.labelSmall.copyWith(color: AppColors.accent, fontSize: 10, fontWeight: FontWeight.bold),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 2),
+                        Text('Premium Craft POS System', style: AppTypography.bodySmall.copyWith(color: AppColors.mediumGray, fontSize: 12)),
+                      ],
+                    ),
+                  ],
+                ),
+
+                // Right Action Buttons
+                Row(
+                  children: [
+                    _buildCleanHeaderButton(
+                      icon: Icons.history_rounded,
+                      label: 'History',
+                      onTap: () {
+                        Navigator.push(context, MaterialPageRoute(builder: (context) => const TransactionHistoryScreen()));
+                      },
+                    ),
+                    const SizedBox(width: 12),
+                    _buildCleanHeaderButton(
+                      icon: Icons.admin_panel_settings_rounded,
+                      label: 'Admin Console',
+                      onTap: _openAdminConsole,
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+
+          // MAIN DESKTOP POS BODY
+          Expanded(
+            child: Row(
+              children: [
           // LEFT COLUMN: Categories
           Container(
             width: 120,
-            color: AppColors.white,
+            color: AppColors.background,
             child: Column(
               children: [
                 Padding(
@@ -213,7 +281,7 @@ class _CashierScreenState extends State<CashierScreen> {
                             decoration: BoxDecoration(
                               color: isSelected
                                   ? AppColors.primary
-                                  : AppColors.lightGray,
+                                  : AppColors.white,
                               borderRadius: BorderRadius.circular(8),
                               border: Border.all(
                                 color: isSelected
@@ -264,39 +332,26 @@ class _CashierScreenState extends State<CashierScreen> {
           // CENTER COLUMN: Products Grid
           Expanded(
             flex: 2,
-            child: Column(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Text(
-                    getCategoryById(selectedCategoryId)?.name ?? 'Products',
-                    style: AppTypography.h2,
-                  ),
-                ),
-                Expanded(
-                  child: GridView.builder(
-                    padding: const EdgeInsets.all(16),
-                    gridDelegate:
-                        const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 3,
-                      childAspectRatio: 1.0,
-                      crossAxisSpacing: 12,
-                      mainAxisSpacing: 12,
-                    ),
-                    itemCount: getDisplayProducts(context).length,
-                    itemBuilder: (context, index) {
-                      final product = getDisplayProducts(context)[index];
-                      return ItemCard(
-                        name: product.name,
-                        description: product.description,
-                        price: '₱${product.basePrice}',
-                        isAvailable: product.isAvailable,
-                        onTap: () => addToOrder(product),
-                      );
-                    },
-                  ),
-                ),
-              ],
+            child: GridView.builder(
+              padding: const EdgeInsets.all(16),
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 3,
+                childAspectRatio: 2.2,
+                crossAxisSpacing: 12,
+                mainAxisSpacing: 12,
+              ),
+              itemCount: getDisplayProducts(context).length,
+              itemBuilder: (context, index) {
+                final product = getDisplayProducts(context)[index];
+                return ItemCard(
+                  code: product.id,
+                  name: product.name,
+                  description: product.description,
+                  price: '₱${product.basePrice}',
+                  isAvailable: product.isAvailable,
+                  onTap: () => addToOrder(product),
+                );
+              },
             ),
           ),
 
@@ -310,28 +365,46 @@ class _CashierScreenState extends State<CashierScreen> {
           // RIGHT COLUMN: Order Summary
           Container(
             width: 300,
-            color: AppColors.background,
+            color: AppColors.white,
             child: Column(
               children: [
                 Expanded(
                   child: SingleChildScrollView(
                     child: Padding(
-                      padding: const EdgeInsets.all(16.0),
+                      padding: const EdgeInsets.only(left: 16, right: 16, top: 12, bottom: 8),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            'Current Order',
-                            style: AppTypography.h3
-                                .copyWith(color: AppColors.primary),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                'Current Order',
+                                style: AppTypography.h3.copyWith(color: AppColors.primary),
+                              ),
+                              if (orderItems.isNotEmpty)
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.primary.withValues(alpha: 0.1),
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  child: Text(
+                                    '${orderItems.length}',
+                                    style: AppTypography.labelSmall.copyWith(color: AppColors.primary, fontWeight: FontWeight.bold),
+                                  ),
+                                ),
+                            ],
                           ),
-                          const SizedBox(height: 16),
+                          const SizedBox(height: 12),
                           if (orderItems.isEmpty)
                             Center(
-                              child: Text(
-                                'No items yet',
-                                style: AppTypography.bodyRegular
-                                    .copyWith(color: AppColors.primary),
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(vertical: 32),
+                                child: Text(
+                                  'No items yet',
+                                  style: AppTypography.bodyRegular.copyWith(color: AppColors.mediumGray),
+                                ),
                               ),
                             )
                           else
@@ -351,7 +424,7 @@ class _CashierScreenState extends State<CashierScreen> {
                   ),
                 ),
                 Padding(
-                  padding: const EdgeInsets.all(16.0),
+                  padding: const EdgeInsets.only(left: 12, right: 12, bottom: 12),
                   child: OrderSummaryCard(
                     itemCount: orderItems.length,
                     subtotal: subtotal,
@@ -433,6 +506,9 @@ class _CashierScreenState extends State<CashierScreen> {
                     onClear: clearOrder,
                   ),
                 ),
+              ],
+            ),
+          ),
               ],
             ),
           ),
@@ -643,8 +719,9 @@ class OrderItemCard extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: AppColors.accent.withValues(alpha: 0.2),
-        borderRadius: BorderRadius.circular(8),
+        color: AppColors.background,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.primary.withValues(alpha: 0.15), width: 1),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -658,21 +735,20 @@ class OrderItemCard extends StatelessWidget {
                   children: [
                     Text(
                       item.product.name,
-                      style: AppTypography.labelMedium
-                          .copyWith(color: AppColors.darkGray),
+                      style: AppTypography.labelMedium.copyWith(color: AppColors.primary),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 4),
                     Text(
                       '${item.selectedSize} • ${item.selectedTemperature}',
-                      style: AppTypography.bodySmall,
+                      style: AppTypography.bodySmall.copyWith(color: AppColors.secondary),
                     ),
                   ],
                 ),
               ),
               IconButton(
-                icon: const Icon(Icons.close, size: 18),
+                icon: const Icon(Icons.close_rounded, size: 18, color: AppColors.mediumGray),
                 onPressed: onRemove,
                 constraints: const BoxConstraints(),
                 padding: EdgeInsets.zero,
@@ -683,24 +759,24 @@ class OrderItemCard extends StatelessWidget {
             const SizedBox(height: 8),
             Text(
               item.selectedAddOns.map((a) => a.name).join(', '),
-              style: AppTypography.bodySmall,
+              style: AppTypography.bodySmall.copyWith(color: AppColors.secondary),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
           ],
+          const SizedBox(height: 8),
+          const Divider(height: 1, thickness: 1, color: AppColors.white),
           const SizedBox(height: 8),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
                 'x${item.quantity}',
-                style:
-                    AppTypography.labelMedium.copyWith(color: AppColors.white),
+                style: AppTypography.labelMedium.copyWith(color: AppColors.primary),
               ),
               Text(
                 '₱${item.getTotal().toStringAsFixed(2)}',
-                style:
-                    AppTypography.labelMedium.copyWith(color: AppColors.accent),
+                style: AppTypography.labelMedium.copyWith(color: AppColors.accent, fontWeight: FontWeight.bold),
               ),
             ],
           ),

@@ -108,8 +108,11 @@ class ItemCard extends StatelessWidget {
   final String? imageUrl;
   final bool isAvailable;
 
+  final String code;
+
   const ItemCard({
     Key? key,
+    required this.code,
     required this.name,
     required this.description,
     required this.price,
@@ -126,59 +129,61 @@ class ItemCard extends StatelessWidget {
         fit: StackFit.expand,
         children: [
           Card(
-            color: isAvailable ? AppColors.white : AppColors.lightGray,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Image Placeholder
-                Container(
-                  width: double.infinity,
-                  height: 120,
-                  decoration: BoxDecoration(
-                    color: AppColors.accent.withValues(alpha: 0.2),
-                    borderRadius: const BorderRadius.only(
-                      topLeft: Radius.circular(12),
-                      topRight: Radius.circular(12),
-                    ),
+            color: isAvailable ? AppColors.background : AppColors.lightGray,
+            elevation: 0,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+              side: BorderSide(color: AppColors.primary.withValues(alpha: 0.15), width: 1.5),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  // Top Row: SKU Code Badge & Price Tag
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: AppColors.primary.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: AppColors.primary.withValues(alpha: 0.2)),
+                        ),
+                        child: Text(
+                          code.toUpperCase(),
+                          style: AppTypography.labelSmall.copyWith(color: AppColors.primary, fontWeight: FontWeight.bold, fontSize: 10),
+                        ),
+                      ),
+                      Text(
+                        price,
+                        style: AppTypography.priceTag.copyWith(color: AppColors.accent, fontSize: 14),
+                      ),
+                    ],
                   ),
-                  child: imageUrl != null
-                      ? Image.network(imageUrl!, fit: BoxFit.cover)
-                      : Icon(
-                          Icons.coffee,
-                          size: 48,
-                          color: AppColors.accent,
-                        ),
-                ),
-                // Content
-                Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          name,
-                          style: AppTypography.labelMedium,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          description,
-                          style: AppTypography.bodySmall,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        const Spacer(),
-                        Text(
-                          price,
-                          style: AppTypography.priceTag,
-                        ),
-                      ],
-                    ),
+                  // Bottom Row: Item Name & Description
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        name,
+                        style: AppTypography.labelMedium.copyWith(color: AppColors.primary, fontSize: 13),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        description,
+                        style: AppTypography.bodySmall.copyWith(color: AppColors.secondary, fontSize: 11),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
           if (!isAvailable)
@@ -240,68 +245,67 @@ class OrderSummaryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
-      color: AppColors.primary,
+      color: AppColors.background,
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(color: AppColors.primary.withValues(alpha: 0.2), width: 1.5),
+      ),
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(12),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              'Order Summary',
-              style: AppTypography.h3.copyWith(color: AppColors.white),
-            ),
-            const SizedBox(height: 16),
             // Items Count
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
                   'Items:',
-                  style: AppTypography.bodyRegular
-                      .copyWith(color: AppColors.white),
+                  style: AppTypography.bodyRegular.copyWith(color: AppColors.darkGray),
                 ),
                 Text(
                   '$itemCount',
-                  style: AppTypography.bodyLarge
-                      .copyWith(color: AppColors.accent),
+                  style: AppTypography.bodyLarge.copyWith(color: AppColors.primary, fontWeight: FontWeight.bold),
                 ),
               ],
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 6),
             // Subtotal
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
                   'Subtotal:',
-                  style: AppTypography.bodyRegular
-                      .copyWith(color: AppColors.white),
+                  style: AppTypography.bodyRegular.copyWith(color: AppColors.darkGray),
                 ),
                 Text(
                   '₱${subtotal.toStringAsFixed(2)}',
-                  style: AppTypography.bodyRegular
-                      .copyWith(color: AppColors.white),
+                  style: AppTypography.bodyRegular.copyWith(color: AppColors.darkGray),
                 ),
               ],
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 4),
             // SC/PWD Toggle
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
                   'SC/PWD (20% Off):',
-                  style: AppTypography.bodySmall.copyWith(color: AppColors.white),
+                  style: AppTypography.bodySmall.copyWith(color: AppColors.darkGray),
                 ),
-                Switch(
-                  value: isSCPWD,
-                  onChanged: onToggleSCPWD,
-                  activeColor: AppColors.accent,
+                Transform.scale(
+                  scale: 0.75,
+                  child: Switch(
+                    value: isSCPWD,
+                    onChanged: onToggleSCPWD,
+                    activeColor: AppColors.primary,
+                  ),
                 ),
               ],
             ),
             if (isSCPWD) ...[
-              const SizedBox(height: 4),
+              const SizedBox(height: 2),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -316,69 +320,72 @@ class OrderSummaryCard extends StatelessWidget {
                 ],
               ),
             ],
-            const SizedBox(height: 8),
+            const SizedBox(height: 4),
             // Tax
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
                   'Tax (12% VAT):',
-                  style: AppTypography.bodySmall
-                      .copyWith(color: AppColors.white),
+                  style: AppTypography.bodySmall.copyWith(color: AppColors.darkGray),
                 ),
                 Text(
                   isSCPWD ? 'VAT Exempt' : '₱${tax.toStringAsFixed(2)}',
                   style: AppTypography.bodySmall.copyWith(
-                    color: isSCPWD ? AppColors.accent : AppColors.white,
+                    color: isSCPWD ? AppColors.accent : AppColors.darkGray,
                     fontWeight: isSCPWD ? FontWeight.bold : FontWeight.normal,
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 12),
-            const Divider(color: AppColors.accent, thickness: 1),
-            const SizedBox(height: 12),
+            const SizedBox(height: 8),
+            Divider(color: AppColors.primary.withValues(alpha: 0.15), thickness: 1),
+            const SizedBox(height: 8),
             // Total
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
                   'Total:',
-                  style: AppTypography.h3.copyWith(color: AppColors.white),
+                  style: AppTypography.h3.copyWith(color: AppColors.primary),
                 ),
                 Text(
                   '₱${total.toStringAsFixed(2)}',
                   style: AppTypography.priceTag.copyWith(
-                    color: AppColors.accent,
-                    fontSize: 24,
+                    color: AppColors.primary,
+                    fontSize: 22,
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 20),
-            // Buttons
-            SizedBox(
-              width: double.infinity,
-              child: LatteButton(
-                label: 'CHECKOUT',
-                onPressed: onCheckout,
-                backgroundColor: AppColors.accent,
-              ),
-            ),
-            const SizedBox(height: 8),
-            SizedBox(
-              width: double.infinity,
-              child: OutlinedButton(
-                onPressed: onClear,
-                style: OutlinedButton.styleFrom(
-                  side: const BorderSide(color: AppColors.accent, width: 2),
+            const SizedBox(height: 14),
+            // Buttons Side-by-Side
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: onClear,
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      side: const BorderSide(color: AppColors.primary, width: 1.5),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    ),
+                    child: Text(
+                      'CLEAR',
+                      style: AppTypography.labelMedium.copyWith(color: AppColors.primary, fontSize: 11),
+                    ),
+                  ),
                 ),
-                child: Text(
-                  'CLEAR ORDER',
-                  style: AppTypography.labelMedium
-                      .copyWith(color: AppColors.accent),
+                const SizedBox(width: 8),
+                Expanded(
+                  flex: 2,
+                  child: LatteButton(
+                    label: 'CHECKOUT',
+                    onPressed: onCheckout,
+                    backgroundColor: AppColors.primary,
+                  ),
                 ),
-              ),
+              ],
             ),
           ],
         ),
