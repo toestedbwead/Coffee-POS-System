@@ -70,8 +70,8 @@ class OrderProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  Future<bool> processCheckout(String paymentMethod) async {
-    if (_items.isEmpty) return false;
+  Future<Order?> processCheckout(String paymentMethod) async {
+    if (_items.isEmpty) return null;
 
     final order = await _orderService.createAndSaveOrder(
       items: _items,
@@ -82,9 +82,9 @@ class OrderProvider with ChangeNotifier {
 
     if (order != null) {
       clearOrder();
-      return true;
+      return order;
     }
-    return false;
+    return null;
   }
 
   // Helper for comparing add-ons

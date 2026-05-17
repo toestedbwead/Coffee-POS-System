@@ -76,17 +76,17 @@ Project Latte is a high-speed, offline-first Point of Sale (POS) system built wi
 - [x] Payment method selection:
   - [x] Cash payment with change calculator
   - [x] e-Wallet payment with reference number capture
-- [ ] Receipt generation:
-  - 80mm thermal printer format
-  - Receipt preview before printing
-  - Receipt itemization with tax breakdown
-- [ ] ESC/POS printer integration:
-  - USB thermal printer support
-  - Print to file option
-  - Printer status detection
-- [ ] Receipt storage:
-  - Receipt templates customization
-  - Receipt archiving in database
+- [x] Receipt generation:
+  - [x] 80mm thermal printer format
+  - [x] Receipt preview before printing
+  - [x] Receipt itemization with tax breakdown
+- [x] ESC/POS printer integration:
+  - [x] USB thermal printer support (Simulated USB001 buffer)
+  - [x] Print to file option
+  - [x] Printer status detection
+- [x] Receipt storage:
+  - [x] Receipt templates customization
+  - [x] Receipt archiving in database
 
 #### Phase 6: Admin & Reporting
 - [ ] Admin dashboard:

@@ -7,7 +7,9 @@ import '../theme/app_theme.dart';
 import '../widgets/latte_components.dart';
 import '../widgets/payment_modal.dart';
 import '../widgets/scpwd_dialog.dart';
+import '../widgets/receipt_preview.dart';
 import 'history_screen.dart';
+
 
 class CashierScreen extends StatefulWidget {
   const CashierScreen({Key? key}) : super(key: key);
@@ -293,14 +295,23 @@ class _CashierScreenState extends State<CashierScreen> {
                           totalAmount: total,
                           onConfirm: (paymentMethod) async {
                             Navigator.pop(context); // Close modal
-                            final success = await orderProvider.processCheckout(paymentMethod);
-                            if (success) {
+                            final order = await orderProvider.processCheckout(paymentMethod);
+                            if (order != null) {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(
                                   content: Text('Order saved successfully!'),
                                   backgroundColor: Colors.green,
                                 ),
                               );
+                              if (context.mounted) {
+                                showDialog(
+                                  context: context,
+                                  builder: (context) => ReceiptPreviewModal(
+                                    order: order,
+                                    paymentMethod: paymentMethod,
+                                  ),
+                                );
+                              }
                             } else {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(
