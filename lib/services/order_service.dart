@@ -79,6 +79,26 @@ class OrderService {
     }
   }
 
+  /// Get filtered orders for CSV exports
+  Future<List<Map<String, dynamic>>> getFilteredOrders({
+    required DateTime startDate,
+    required DateTime endDate,
+    required String paymentMethod,
+    required String status,
+  }) async {
+    try {
+      return await _db.getFilteredOrders(
+        startDate: startDate,
+        endDate: endDate,
+        paymentMethod: paymentMethod,
+        status: status,
+      );
+    } catch (e) {
+      print('Error fetching filtered orders: $e');
+      return [];
+    }
+  }
+
   /// Get daily summary (for dashboard)
   Future<Map<String, dynamic>> getDailySummary(DateTime date) async {
     try {
@@ -126,6 +146,21 @@ class OrderService {
       print('Error fetching hourly sales: $e');
       return [];
     }
+  }
+
+  /// Get category breakdown
+  Future<List<Map<String, dynamic>>> getCategoryBreakdown(DateTime date) async {
+    try {
+      return await _db.getCategoryBreakdown(date);
+    } catch (e) {
+      print('Error fetching category breakdown: $e');
+      return [];
+    }
+  }
+
+  /// Save product to database
+  Future<bool> saveProduct(Product product) async {
+    return await _db.saveProduct(product);
   }
 
   /// Calculate change from payment

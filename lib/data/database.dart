@@ -1,5 +1,6 @@
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import '../models/product_model.dart';
+import '../data/mock_menu.dart';
 
 class DatabaseHelper {
   static final DatabaseHelper _instance = DatabaseHelper._internal();
@@ -144,6 +145,53 @@ class DatabaseHelper {
     }
   }
 
+  // Get filtered orders for CSV exports
+  Future<List<Map<String, dynamic>>> getFilteredOrders({
+    required DateTime startDate,
+    required DateTime endDate,
+    required String paymentMethod,
+    required String status,
+  }) async {
+    try {
+      final db = await database;
+      final start = DateTime(startDate.year, startDate.month, startDate.day).toIso8601String();
+      final end = DateTime(endDate.year, endDate.month, endDate.day, 23, 59, 59).toIso8601String();
+
+      List<String> whereClauses = ['timestamp BETWEEN ? AND ?'];
+      List<Object> whereArgs = [start, end];
+
+      if (paymentMethod != 'All') {
+        if (paymentMethod == 'Cash') {
+          whereClauses.add('paymentMethod LIKE ?');
+          whereArgs.add('%Cash%');
+        } else if (paymentMethod == 'E-Wallet') {
+          whereClauses.add('(paymentMethod LIKE ? OR paymentMethod LIKE ? OR paymentMethod LIKE ?)');
+          whereArgs.addAll(['%GCash%', '%Maya%', '%Wallet%']);
+        } else if (paymentMethod == 'Card') {
+          whereClauses.add('(paymentMethod LIKE ? OR paymentMethod LIKE ? OR paymentMethod LIKE ?)');
+          whereArgs.addAll(['%Card%', '%Debit%', '%Credit%']);
+        }
+      }
+
+      if (status != 'All') {
+        whereClauses.add('status = ?');
+        whereArgs.add(status);
+      }
+
+      final whereString = whereClauses.join(' AND ');
+
+      return await db.query(
+        'orders',
+        where: whereString,
+        whereArgs: whereArgs,
+        orderBy: 'timestamp DESC',
+      );
+    } catch (e) {
+      print('Error fetching filtered orders: $e');
+      return [];
+    }
+  }
+
   // Get orders for a specific date
   Future<List<Map<String, dynamic>>> getOrdersByDate(DateTime date) async {
     try {
@@ -206,18 +254,34 @@ class DatabaseHelper {
       final db = await database;
       final orders = await getOrdersByDate(date);
 
-      double totalRevenue = 0;
-      double totalTax = 0;
-      double totalDiscounts = 0;
+      double totalRevenue = 0; // Gross Revenue
+      double totalTax = 0; // VAT
+      double totalDiscounts = 0; // SC/PWD
       int totalTransactions = 0;
       int totalItems = 0;
 
+      // Tender breakdown
+      double cashSales = 0;
+      double ewalletSales = 0; // GCash, Maya, etc.
+      double cardSales = 0;
+
       for (var order in orders) {
         if (order['status'] != 'Voided') {
-          totalRevenue += order['total'] as double;
+          final double orderTotal = order['total'] as double;
+          totalRevenue += orderTotal;
           totalTax += order['taxAmount'] as double;
           totalDiscounts += (order['discountAmount'] as num?)?.toDouble() ?? 0.0;
           totalTransactions++;
+
+          // Payment tender tracking
+          final String method = order['paymentMethod']?.toString().toLowerCase() ?? 'cash';
+          if (method.contains('gcash') || method.contains('maya') || method.contains('wallet')) {
+            ewalletSales += orderTotal;
+          } else if (method.contains('card') || method.contains('debit') || method.contains('credit')) {
+            cardSales += orderTotal;
+          } else {
+            cashSales += orderTotal; // Default to Cash
+          }
 
           // Count items in this order
           final items = await getOrderItems(order['id'] as String);
@@ -227,16 +291,21 @@ class DatabaseHelper {
         }
       }
 
+      final double netRevenue = totalRevenue - totalTax - totalDiscounts;
+
       return {
         'date': date,
-        'totalRevenue': totalRevenue,
+        'totalRevenue': totalRevenue, // Gross
+        'netRevenue': netRevenue > 0 ? netRevenue : 0.0,
         'totalTax': totalTax,
         'totalDiscounts': totalDiscounts,
         'totalTransactions': totalTransactions,
         'totalItems': totalItems,
-        'averageTransactionValue': totalTransactions > 0
-            ? totalRevenue / totalTransactions
-            : 0,
+        'averageTransactionValue': totalTransactions > 0 ? totalRevenue / totalTransactions : 0.0,
+        'averageItemsPerTicket': totalTransactions > 0 ? totalItems / totalTransactions : 0.0,
+        'cashSales': cashSales,
+        'ewalletSales': ewalletSales,
+        'cardSales': cardSales,
       };
     } catch (e) {
       print('Error calculating daily summary: $e');
@@ -298,6 +367,100 @@ class DatabaseHelper {
       return result;
     } catch (e) {
       print('Error fetching hourly sales: $e');
+      return [];
+    }
+  }
+
+  // Save or update product in database
+  Future<bool> saveProduct(Product product) async {
+    try {
+      final db = await database;
+      await db.insert('products', {
+        'id': product.id,
+        'name': product.name,
+        'description': product.description ?? '',
+        'basePrice': product.basePrice,
+        'categoryId': product.categoryId,
+        'availableSizes': product.availableSizes.join(','),
+        'availableTemperatures': product.availableTemperatures.join(','),
+        'isAvailable': product.isAvailable ? 1 : 0,
+      }, conflictAlgorithm: ConflictAlgorithm.replace);
+      return true;
+    } catch (e) {
+      print('Error saving product: $e');
+      return false;
+    }
+  }
+
+  // Get category breakdown for a specific date
+  Future<List<Map<String, dynamic>>> getCategoryBreakdown(DateTime date) async {
+    try {
+      final db = await database;
+
+      // Auto-seed products table if empty to ensure JOIN works perfectly!
+      final countRes = await db.rawQuery('SELECT COUNT(*) as cnt FROM products');
+      final int count = (countRes.first['cnt'] as num?)?.toInt() ?? 0;
+      if (count == 0) {
+        for (var p in mockProducts) {
+          await db.insert('products', {
+            'id': p.id,
+            'name': p.name,
+            'description': p.description ?? '',
+            'basePrice': p.basePrice,
+            'categoryId': p.categoryId,
+            'availableSizes': p.availableSizes.join(','),
+            'availableTemperatures': p.availableTemperatures.join(','),
+            'isAvailable': p.isAvailable ? 1 : 0,
+          }, conflictAlgorithm: ConflictAlgorithm.replace);
+        }
+      }
+
+      final startOfDay = DateTime(date.year, date.month, date.day);
+      final endOfDay = DateTime(date.year, date.month, date.day, 23, 59, 59);
+
+      final result = await db.rawQuery('''
+        SELECT 
+          p.categoryId as category,
+          SUM(oi.quantity) as totalQuantity,
+          SUM(oi.itemTotal) as totalRevenue
+        FROM order_items oi
+        JOIN products p ON oi.productId = p.id
+        WHERE oi.orderId IN (
+          SELECT id FROM orders 
+          WHERE timestamp BETWEEN ? AND ? AND status != 'Voided'
+        )
+        GROUP BY p.categoryId
+        ORDER BY totalRevenue DESC
+      ''', [
+        startOfDay.toIso8601String(),
+        endOfDay.toIso8601String(),
+      ]);
+
+      final List<Map<String, dynamic>> mappedResult = [];
+      for (var row in result) {
+        final String catId = row['category']?.toString() ?? '';
+        String catName = catId;
+        
+        final matchedCat = mockCategories.where((c) => c.id == catId).toList();
+        if (matchedCat.isNotEmpty) {
+          catName = matchedCat.first.name;
+        } else if (catId == 'c1') { catName = 'Hot Coffee'; }
+        else if (catId == 'c2') { catName = 'Iced Coffee'; }
+        else if (catId == 'c3') { catName = 'Frappes'; }
+        else if (catId == 'c4') { catName = 'Teas & Sodas'; }
+        else if (catId == 'c5') { catName = 'Food & Snacks'; }
+        else if (catId == 'c6') { catName = 'Add-ons & Fees'; }
+        
+        mappedResult.add({
+          'category': catName,
+          'totalQuantity': row['totalQuantity'],
+          'totalRevenue': row['totalRevenue'],
+        });
+      }
+
+      return mappedResult;
+    } catch (e) {
+      print('Error fetching category breakdown: $e');
       return [];
     }
   }

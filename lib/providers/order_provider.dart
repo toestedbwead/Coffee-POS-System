@@ -117,12 +117,14 @@ class OrderProvider with ChangeNotifier {
     final index = mockProducts.indexWhere((p) => p.id == updatedProduct.id);
     if (index != -1) {
       mockProducts[index] = updatedProduct;
+      _orderService.saveProduct(updatedProduct);
       notifyListeners();
     }
   }
 
   void addProduct(Product newProduct) {
     mockProducts.add(newProduct);
+    _orderService.saveProduct(newProduct);
     notifyListeners();
   }
 

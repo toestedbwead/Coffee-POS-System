@@ -31,7 +31,14 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
   Map<String, dynamic> _dailySummary = {};
   List<Map<String, dynamic>> _topProducts = [];
   List<Map<String, dynamic>> _hourlySales = [];
+  List<Map<String, dynamic>> _categorySales = [];
   DateTime _selectedDate = DateTime.now();
+
+  // Exports & Reports Filters State
+  DateTime _exportStartDate = DateTime.now().subtract(const Duration(days: 30));
+  DateTime _exportEndDate = DateTime.now();
+  String _exportPaymentFilter = 'All'; // All, Cash, E-Wallet, Card
+  String _exportStatusFilter = 'All'; // All, Completed, Voided
 
   // Settings State
   final TextEditingController _storeNameController = TextEditingController(text: 'PROJECT LATTE COFFEE');
@@ -82,11 +89,13 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
       endDate: DateTime(_selectedDate.year, _selectedDate.month, _selectedDate.day, 23, 59, 59),
     );
     final hourly = await _orderService.getHourlySalesData(_selectedDate);
+    final category = await _orderService.getCategoryBreakdown(_selectedDate);
 
     setState(() {
       _dailySummary = summary;
       _topProducts = top;
       _hourlySales = hourly;
+      _categorySales = category;
       _isLoading = false;
     });
   }
@@ -230,9 +239,12 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
   // ==================== 1. ANALYTICS TAB ====================
   Widget _buildAnalyticsTab() {
     final double totalRevenue = (_dailySummary['totalRevenue'] as num?)?.toDouble() ?? 0.0;
+    final double netRevenue = (_dailySummary['netRevenue'] as num?)?.toDouble() ?? 0.0;
     final int totalTransactions = (_dailySummary['totalTransactions'] as num?)?.toInt() ?? 0;
-    final int totalItems = (_dailySummary['totalItems'] as num?)?.toInt() ?? 0;
     final double avgOrder = (_dailySummary['averageTransactionValue'] as num?)?.toDouble() ?? 0.0;
+    final double cashSales = (_dailySummary['cashSales'] as num?)?.toDouble() ?? 0.0;
+    final double ewalletSales = (_dailySummary['ewalletSales'] as num?)?.toDouble() ?? 0.0;
+    final double cardSales = (_dailySummary['cardSales'] as num?)?.toDouble() ?? 0.0;
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(32),
@@ -244,16 +256,105 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
           Text('Key performance indicators for ${DateFormat('MMMM dd, yyyy').format(_selectedDate)}', style: AppTypography.bodyRegular),
           const SizedBox(height: 24),
 
-          // TOP STAT CARDS ROW
+          // TOP STAT CARDS ROW (4 Main KPIs)
           Row(
             children: [
               Expanded(child: _buildStatCard(title: 'Gross Revenue', value: '₱${totalRevenue.toStringAsFixed(2)}', icon: Icons.attach_money, color: AppColors.primary)),
               const SizedBox(width: 20),
+              Expanded(child: _buildStatCard(title: 'Net Revenue', value: '₱${netRevenue.toStringAsFixed(2)}', icon: Icons.account_balance_wallet, color: AppColors.success)),
+              const SizedBox(width: 20),
               Expanded(child: _buildStatCard(title: 'Transactions', value: '$totalTransactions', icon: Icons.receipt_long, color: AppColors.accent)),
               const SizedBox(width: 20),
-              Expanded(child: _buildStatCard(title: 'Avg Order Value', value: '₱${avgOrder.toStringAsFixed(2)}', icon: Icons.trending_up, color: AppColors.success)),
-              const SizedBox(width: 20),
-              Expanded(child: _buildStatCard(title: 'Items Sold', value: '$totalItems', icon: Icons.local_cafe, color: Colors.orange)),
+              Expanded(child: _buildStatCard(title: 'Avg Order Value', value: '₱${avgOrder.toStringAsFixed(2)}', icon: Icons.trending_up, color: Colors.orange)),
+            ],
+          ),
+          const SizedBox(height: 24),
+
+          // TENDER RECONCILIATION & CATEGORY ROW
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // TENDER BREAKDOWN CARD
+              Expanded(
+                flex: 3,
+                child: Container(
+                  padding: const EdgeInsets.all(24),
+                  decoration: BoxDecoration(
+                    color: AppColors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, 4))],
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Cashier Tender Reconciliation', style: AppTypography.h2),
+                      const SizedBox(height: 8),
+                      Text('Physical drawer cash vs digital wallet / card transfers.', style: AppTypography.bodySmall.copyWith(color: AppColors.mediumGray)),
+                      const SizedBox(height: 24),
+                      Row(
+                        children: [
+                          Expanded(child: _buildTenderBox('Cash Drawer', cashSales, Icons.money, AppColors.success)),
+                          const SizedBox(width: 16),
+                          Expanded(child: _buildTenderBox('E-Wallet (GCash/Maya)', ewalletSales, Icons.qr_code_scanner, AppColors.primary)),
+                          const SizedBox(width: 16),
+                          Expanded(child: _buildTenderBox('Credit / Debit Card', cardSales, Icons.credit_card, AppColors.accent)),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(width: 24),
+
+              // CATEGORY BREAKDOWN CARD
+              Expanded(
+                flex: 2,
+                child: Container(
+                  padding: const EdgeInsets.all(24),
+                  decoration: BoxDecoration(
+                    color: AppColors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, 4))],
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Sales by Menu Category', style: AppTypography.h2),
+                      const SizedBox(height: 16),
+                      _categorySales.isEmpty
+                          ? Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 24),
+                              child: Center(child: Text('No category sales recorded.', style: AppTypography.bodyRegular)),
+                            )
+                          : ListView.separated(
+                              shrinkWrap: true,
+                              physics: const NeverScrollableScrollPhysics(),
+                              itemCount: _categorySales.length,
+                              separatorBuilder: (context, index) => const Divider(height: 16),
+                              itemBuilder: (context, index) {
+                                final item = _categorySales[index];
+                                final cat = item['category']?.toString() ?? 'Other';
+                                final qty = item['totalQuantity'] as int;
+                                final rev = item['totalRevenue'] as double;
+                                return Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(cat, style: AppTypography.labelMedium),
+                                        Text('$qty items sold', style: AppTypography.bodySmall.copyWith(color: AppColors.mediumGray)),
+                                      ],
+                                    ),
+                                    Text('₱${rev.toStringAsFixed(2)}', style: AppTypography.labelMedium.copyWith(fontWeight: FontWeight.bold)),
+                                  ],
+                                );
+                              },
+                            ),
+                    ],
+                  ),
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 36),
@@ -360,7 +461,10 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(title, style: AppTypography.bodyRegular.copyWith(color: AppColors.mediumGray)),
+              Expanded(
+                child: Text(title, style: AppTypography.bodyRegular.copyWith(color: AppColors.mediumGray), overflow: TextOverflow.ellipsis, maxLines: 1),
+              ),
+              const SizedBox(width: 8),
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(color: color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(12)),
@@ -369,7 +473,34 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
             ],
           ),
           const SizedBox(height: 16),
-          Text(value, style: AppTypography.h1.copyWith(fontSize: 28)),
+          Text(value, style: AppTypography.h1.copyWith(fontSize: 28), overflow: TextOverflow.ellipsis, maxLines: 1),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTenderBox(String label, double amount, IconData icon, Color color) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(icon, color: color, size: 20),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(label, style: AppTypography.bodySmall.copyWith(color: AppColors.mediumGray, fontWeight: FontWeight.bold), overflow: TextOverflow.ellipsis, maxLines: 1),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text('₱${amount.toStringAsFixed(2)}', style: AppTypography.h2.copyWith(color: color, fontSize: 20), overflow: TextOverflow.ellipsis, maxLines: 1),
         ],
       ),
     );
@@ -461,15 +592,136 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
         children: [
           Text('Export & Accounting Reports', style: AppTypography.h1),
           const SizedBox(height: 8),
-          Text('Generate tax-compliant summaries and accounting spreadsheets.', style: AppTypography.bodyRegular),
+          Text('Generate tax-compliant summaries, accounting spreadsheets, and inventory reconciliation logs.', style: AppTypography.bodyRegular),
           const SizedBox(height: 32),
+
+          // REPORT FILTER BAR
+          Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: AppColors.white,
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, 4))],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Export Criteria & Filters', style: AppTypography.h2),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    // DATE RANGE PICKER
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('Date Range', style: AppTypography.bodySmall.copyWith(color: AppColors.mediumGray)),
+                          const SizedBox(height: 8),
+                          InkWell(
+                            onTap: () async {
+                              final DateTimeRange? picked = await showDateRangePicker(
+                                context: context,
+                                initialDateRange: DateTimeRange(start: _exportStartDate, end: _exportEndDate),
+                                firstDate: DateTime(2020),
+                                lastDate: DateTime.now(),
+                                builder: (context, child) => Theme(
+                                  data: ThemeData.light().copyWith(
+                                    colorScheme: const ColorScheme.light(primary: AppColors.primary, onPrimary: Colors.white),
+                                  ),
+                                  child: child!,
+                                ),
+                              );
+                              if (picked != null) {
+                                setState(() {
+                                  _exportStartDate = picked.start;
+                                  _exportEndDate = picked.end;
+                                });
+                              }
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                              decoration: BoxDecoration(border: Border.all(color: AppColors.mediumGray.withValues(alpha: 0.3)), borderRadius: BorderRadius.circular(12)),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text('${DateFormat('MMM dd, yyyy').format(_exportStartDate)} - ${DateFormat('MMM dd, yyyy').format(_exportEndDate)}', style: AppTypography.bodyRegular),
+                                  const Icon(Icons.calendar_today, color: AppColors.primary, size: 20),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 24),
+
+                    // PAYMENT METHOD FILTER
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('Payment Method', style: AppTypography.bodySmall.copyWith(color: AppColors.mediumGray)),
+                          const SizedBox(height: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
+                            decoration: BoxDecoration(border: Border.all(color: AppColors.mediumGray.withValues(alpha: 0.3)), borderRadius: BorderRadius.circular(12)),
+                            child: DropdownButtonHideUnderline(
+                              child: DropdownButton<String>(
+                                value: _exportPaymentFilter,
+                                isExpanded: true,
+                                items: ['All', 'Cash', 'E-Wallet', 'Card'].map((String val) {
+                                  return DropdownMenuItem<String>(value: val, child: Text(val, style: AppTypography.bodyRegular));
+                                }).toList(),
+                                onChanged: (val) {
+                                  if (val != null) setState(() => _exportPaymentFilter = val);
+                                },
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 24),
+
+                    // STATUS FILTER
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('Transaction Status', style: AppTypography.bodySmall.copyWith(color: AppColors.mediumGray)),
+                          const SizedBox(height: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
+                            decoration: BoxDecoration(border: Border.all(color: AppColors.mediumGray.withValues(alpha: 0.3)), borderRadius: BorderRadius.circular(12)),
+                            child: DropdownButtonHideUnderline(
+                              child: DropdownButton<String>(
+                                value: _exportStatusFilter,
+                                isExpanded: true,
+                                items: ['All', 'Completed', 'Voided'].map((String val) {
+                                  return DropdownMenuItem<String>(value: val, child: Text(val, style: AppTypography.bodyRegular));
+                                }).toList(),
+                                onChanged: (val) {
+                                  if (val != null) setState(() => _exportStatusFilter = val);
+                                },
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 36),
 
           Row(
             children: [
               Expanded(
                 child: _buildExportCard(
                   title: 'Daily Sales Report (PDF)',
-                  description: 'Detailed breakdown of today\'s transactions, VAT collected, and SC/PWD discounts applied.',
+                  description: 'Detailed breakdown of today\'s transactions, Net Revenue, VAT, SC/PWD discounts, and cashier tender reconciliation.',
                   icon: Icons.picture_as_pdf,
                   color: AppColors.primary,
                   onExport: () => _exportSummaryPdf('Daily'),
@@ -478,11 +730,21 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
               const SizedBox(width: 24),
               Expanded(
                 child: _buildExportCard(
-                  title: 'Monthly Accounting (CSV)',
-                  description: 'Complete spreadsheet export of all transactions for import into QuickBooks or Excel.',
+                  title: 'Filtered Accounting (CSV)',
+                  description: 'Spreadsheet of transactions matching your selected Date Range, Payment Method, and Status criteria.',
                   icon: Icons.table_chart,
                   color: AppColors.success,
                   onExport: _exportMonthlyCsv,
+                ),
+              ),
+              const SizedBox(width: 24),
+              Expanded(
+                child: _buildExportCard(
+                  title: 'Filtered Inventory (CSV)',
+                  description: 'Granular spreadsheet of individual items sold matching your selected Date Range and Status criteria.',
+                  icon: Icons.inventory,
+                  color: AppColors.accent,
+                  onExport: _exportItemizedCsv,
                 ),
               ),
             ],
@@ -533,92 +795,111 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
     final orderProvider = context.read<OrderProvider>();
     final doc = pw.Document();
     final summary = await _orderService.getDailySummary(_selectedDate);
+    final categorySales = await _orderService.getCategoryBreakdown(_selectedDate);
+
     final totalRev = (summary['totalRevenue'] as num?)?.toDouble() ?? 0.0;
+    final netRev = (summary['netRevenue'] as num?)?.toDouble() ?? 0.0;
     final totalTax = (summary['totalTax'] as num?)?.toDouble() ?? 0.0;
     final totalDiscounts = (summary['totalDiscounts'] as num?)?.toDouble() ?? 0.0;
     final totalTrans = (summary['totalTransactions'] as num?)?.toInt() ?? 0;
     final totalItems = (summary['totalItems'] as num?)?.toInt() ?? 0;
+    final avgOrder = (summary['averageTransactionValue'] as num?)?.toDouble() ?? 0.0;
+    final cashSales = (summary['cashSales'] as num?)?.toDouble() ?? 0.0;
+    final ewalletSales = (summary['ewalletSales'] as num?)?.toDouble() ?? 0.0;
+    final cardSales = (summary['cardSales'] as num?)?.toDouble() ?? 0.0;
     final vatRateStr = (orderProvider.vatRate * 100).toStringAsFixed(0);
 
     doc.addPage(
-      pw.Page(
+      pw.MultiPage(
         pageFormat: PdfPageFormat.a4,
+        margin: const pw.EdgeInsets.all(32),
         build: (pw.Context context) {
-          return pw.Padding(
-            padding: const pw.EdgeInsets.all(24),
-            child: pw.Column(
-              crossAxisAlignment: pw.CrossAxisAlignment.start,
-              children: [
-                pw.Text(orderProvider.storeName, style: pw.TextStyle(fontSize: 26, fontWeight: pw.FontWeight.bold)),
-                pw.SizedBox(height: 4),
-                pw.Text('${orderProvider.storeAddress} | TIN: ${orderProvider.tin}', style: const pw.TextStyle(fontSize: 12, color: PdfColors.grey700)),
-                pw.SizedBox(height: 16),
-                pw.Divider(thickness: 2),
-                pw.SizedBox(height: 16),
-                pw.Text('$type Sales Report - ${DateFormat('MMMM dd, yyyy').format(_selectedDate)}', style: pw.TextStyle(fontSize: 20, fontWeight: pw.FontWeight.bold)),
-                pw.SizedBox(height: 6),
-                pw.Text('Generated: ${DateFormat('yyyy-MM-dd HH:mm').format(DateTime.now())}', style: const pw.TextStyle(fontSize: 11, color: PdfColors.grey600)),
-                pw.SizedBox(height: 28),
+          return [
+            // Header
+            pw.Text(orderProvider.storeName, style: pw.TextStyle(fontSize: 26, fontWeight: pw.FontWeight.bold)),
+            pw.SizedBox(height: 4),
+            pw.Text('${orderProvider.storeAddress} | TIN: ${orderProvider.tin}', style: const pw.TextStyle(fontSize: 12, color: PdfColors.grey700)),
+            pw.SizedBox(height: 16),
+            pw.Divider(thickness: 2),
+            pw.SizedBox(height: 16),
+            pw.Text('$type Sales & Accounting Report - ${DateFormat('MMMM dd, yyyy').format(_selectedDate)}', style: pw.TextStyle(fontSize: 20, fontWeight: pw.FontWeight.bold)),
+            pw.SizedBox(height: 6),
+            pw.Text('Generated: ${DateFormat('yyyy-MM-dd HH:mm').format(DateTime.now())}', style: const pw.TextStyle(fontSize: 11, color: PdfColors.grey600)),
+            pw.SizedBox(height: 28),
 
-                pw.Container(
-                  padding: const pw.EdgeInsets.all(16),
-                  decoration: pw.BoxDecoration(color: PdfColors.grey100, borderRadius: pw.BorderRadius.circular(8)),
-                  child: pw.Column(
-                    children: [
-                      pw.Row(
-                        mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-                        children: [
-                          pw.Text('Gross Revenue:', style: pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold)),
-                          pw.Text('PHP ${totalRev.toStringAsFixed(2)}', style: pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold)),
-                        ],
-                      ),
-                      pw.SizedBox(height: 12),
-                      pw.Divider(),
-                      pw.SizedBox(height: 12),
-                      pw.Row(
-                        mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-                        children: [
-                          pw.Text('Total VAT Collected ($vatRateStr%):', style: const pw.TextStyle(fontSize: 14)),
-                          pw.Text('PHP ${totalTax.toStringAsFixed(2)}', style: const pw.TextStyle(fontSize: 14)),
-                        ],
-                      ),
-                      pw.SizedBox(height: 8),
-                      pw.Row(
-                        mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-                        children: [
-                          pw.Text('SC/PWD Discounts Applied:', style: const pw.TextStyle(fontSize: 14)),
-                          pw.Text('-PHP ${totalDiscounts.toStringAsFixed(2)}', style: const pw.TextStyle(fontSize: 14, color: PdfColors.red700)),
-                        ],
-                      ),
-                      pw.SizedBox(height: 8),
-                      pw.Row(
-                        mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-                        children: [
-                          pw.Text('Total Transactions:', style: const pw.TextStyle(fontSize: 14)),
-                          pw.Text('$totalTrans', style: const pw.TextStyle(fontSize: 14)),
-                        ],
-                      ),
-                      pw.SizedBox(height: 8),
-                      pw.Row(
-                        mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-                        children: [
-                          pw.Text('Total Items Sold:', style: const pw.TextStyle(fontSize: 14)),
-                          pw.Text('$totalItems', style: const pw.TextStyle(fontSize: 14)),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-
-                pw.SizedBox(height: 48),
-                pw.Divider(borderStyle: pw.BorderStyle.dashed),
-                pw.SizedBox(height: 12),
-                pw.Text('OFFICIAL ACCOUNTING & TAX COMPLIANCE EXPORT', style: pw.TextStyle(fontSize: 10, fontWeight: pw.FontWeight.bold, color: PdfColors.grey600)),
-                pw.SizedBox(height: 4),
-                pw.Text('Confidential - Internal Business Use Only', style: const pw.TextStyle(fontSize: 9, color: PdfColors.grey500)),
-              ],
+            // Section 1: Financial Overview
+            pw.Text('1. Financial Overview', style: pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold)),
+            pw.SizedBox(height: 12),
+            pw.Container(
+              padding: const pw.EdgeInsets.all(16),
+              decoration: pw.BoxDecoration(color: PdfColors.grey100, borderRadius: pw.BorderRadius.circular(8)),
+              child: pw.Column(
+                children: [
+                  pw.Row(mainAxisAlignment: pw.MainAxisAlignment.spaceBetween, children: [pw.Text('Gross Revenue:', style: pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold)), pw.Text('PHP ${totalRev.toStringAsFixed(2)}', style: pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold))]),
+                  pw.SizedBox(height: 8),
+                  pw.Row(mainAxisAlignment: pw.MainAxisAlignment.spaceBetween, children: [pw.Text('Net Revenue (Earnings):', style: pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold, color: PdfColors.green700)), pw.Text('PHP ${netRev.toStringAsFixed(2)}', style: pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold, color: PdfColors.green700))]),
+                  pw.SizedBox(height: 12),
+                  pw.Divider(),
+                  pw.SizedBox(height: 12),
+                  pw.Row(mainAxisAlignment: pw.MainAxisAlignment.spaceBetween, children: [pw.Text('Total VAT Collected ($vatRateStr%):', style: const pw.TextStyle(fontSize: 12)), pw.Text('PHP ${totalTax.toStringAsFixed(2)}', style: const pw.TextStyle(fontSize: 12))]),
+                  pw.SizedBox(height: 6),
+                  pw.Row(mainAxisAlignment: pw.MainAxisAlignment.spaceBetween, children: [pw.Text('SC/PWD Discounts Applied:', style: const pw.TextStyle(fontSize: 12)), pw.Text('-PHP ${totalDiscounts.toStringAsFixed(2)}', style: const pw.TextStyle(fontSize: 12, color: PdfColors.red700))]),
+                  pw.SizedBox(height: 6),
+                  pw.Row(mainAxisAlignment: pw.MainAxisAlignment.spaceBetween, children: [pw.Text('Total Transactions:', style: const pw.TextStyle(fontSize: 12)), pw.Text('$totalTrans', style: const pw.TextStyle(fontSize: 12))]),
+                  pw.SizedBox(height: 6),
+                  pw.Row(mainAxisAlignment: pw.MainAxisAlignment.spaceBetween, children: [pw.Text('Total Items Sold:', style: const pw.TextStyle(fontSize: 12)), pw.Text('$totalItems', style: const pw.TextStyle(fontSize: 12))]),
+                  pw.SizedBox(height: 6),
+                  pw.Row(mainAxisAlignment: pw.MainAxisAlignment.spaceBetween, children: [pw.Text('Average Order Value:', style: const pw.TextStyle(fontSize: 12)), pw.Text('PHP ${avgOrder.toStringAsFixed(2)}', style: const pw.TextStyle(fontSize: 12))]),
+                ],
+              ),
             ),
-          );
+            pw.SizedBox(height: 28),
+
+            // Section 2: Cashier Tender Reconciliation
+            pw.Text('2. Cashier Tender Reconciliation', style: pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold)),
+            pw.SizedBox(height: 12),
+            pw.Container(
+              padding: const pw.EdgeInsets.all(16),
+              decoration: pw.BoxDecoration(color: PdfColors.grey100, borderRadius: pw.BorderRadius.circular(8)),
+              child: pw.Column(
+                children: [
+                  pw.Row(mainAxisAlignment: pw.MainAxisAlignment.spaceBetween, children: [pw.Text('Cash Drawer (Physical Cash):', style: pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold)), pw.Text('PHP ${cashSales.toStringAsFixed(2)}', style: pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold))]),
+                  pw.SizedBox(height: 8),
+                  pw.Divider(),
+                  pw.SizedBox(height: 8),
+                  pw.Row(mainAxisAlignment: pw.MainAxisAlignment.spaceBetween, children: [pw.Text('E-Wallet (GCash / Maya Transfers):', style: const pw.TextStyle(fontSize: 12)), pw.Text('PHP ${ewalletSales.toStringAsFixed(2)}', style: const pw.TextStyle(fontSize: 12))]),
+                  pw.SizedBox(height: 6),
+                  pw.Row(mainAxisAlignment: pw.MainAxisAlignment.spaceBetween, children: [pw.Text('Credit / Debit Card Terminal:', style: const pw.TextStyle(fontSize: 12)), pw.Text('PHP ${cardSales.toStringAsFixed(2)}', style: const pw.TextStyle(fontSize: 12))]),
+                ],
+              ),
+            ),
+            pw.SizedBox(height: 28),
+
+            // Section 3: Category Sales Breakdown
+            pw.Text('3. Sales by Menu Category', style: pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold)),
+            pw.SizedBox(height: 12),
+            categorySales.isEmpty
+                ? pw.Text('No category sales recorded for this date.', style: const pw.TextStyle(fontSize: 12, color: PdfColors.grey600))
+                : pw.Table.fromTextArray(
+                    headers: ['Category Name', 'Quantity Sold', 'Gross Revenue'],
+                    data: categorySales.map((c) => [
+                      c['category']?.toString() ?? 'Other',
+                      '${c["totalQuantity"]}',
+                      'PHP ${(c["totalRevenue"] as num).toDouble().toStringAsFixed(2)}',
+                    ]).toList(),
+                    headerStyle: pw.TextStyle(fontSize: 12, fontWeight: pw.FontWeight.bold, color: PdfColors.white),
+                    headerDecoration: const pw.BoxDecoration(color: PdfColors.blueGrey800),
+                    cellStyle: const pw.TextStyle(fontSize: 11),
+                    cellPadding: const pw.EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  ),
+
+            pw.SizedBox(height: 48),
+            pw.Divider(borderStyle: pw.BorderStyle.dashed),
+            pw.SizedBox(height: 12),
+            pw.Text('OFFICIAL ACCOUNTING & TAX COMPLIANCE EXPORT', style: pw.TextStyle(fontSize: 10, fontWeight: pw.FontWeight.bold, color: PdfColors.grey600)),
+            pw.SizedBox(height: 4),
+            pw.Text('Confidential - Internal Business Use Only', style: const pw.TextStyle(fontSize: 9, color: PdfColors.grey500)),
+          ];
         },
       ),
     );
@@ -628,7 +909,12 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
 
   Future<void> _exportMonthlyCsv() async {
     final orderProvider = context.read<OrderProvider>();
-    final orders = await _db.getAllOrders();
+    final orders = await _orderService.getFilteredOrders(
+      startDate: _exportStartDate,
+      endDate: _exportEndDate,
+      paymentMethod: _exportPaymentFilter,
+      status: _exportStatusFilter,
+    );
     final StringBuffer csv = StringBuffer();
     
     // Header Info
@@ -636,6 +922,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
     csv.writeln('Store Address,${orderProvider.storeAddress.replaceAll(",", ";")}');
     csv.writeln('VAT REG TIN,${orderProvider.tin}');
     csv.writeln('Export Date,${DateFormat('yyyy-MM-dd HH:mm').format(DateTime.now())}');
+    csv.writeln('Report Type,Filtered Master Transaction Log');
+    csv.writeln('Filters Applied,Date Range: ${DateFormat("yyyy-MM-dd").format(_exportStartDate)} to ${DateFormat("yyyy-MM-dd").format(_exportEndDate)} | Payment: $_exportPaymentFilter | Status: $_exportStatusFilter');
     csv.writeln('');
     csv.writeln('Order ID,Timestamp,Subtotal,VAT Amount,Total,Payment Method,Status,Customer Type,SC/PWD Discount');
 
@@ -645,14 +933,76 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
       csv.writeln('${o["id"]},${o["timestamp"]},${o["subtotal"]},${o["taxAmount"]},${o["total"]},${o["paymentMethod"]},${o["status"]},$custName,$discount');
     }
 
-    final filename = '${orderProvider.storeName.replaceAll(" ", "_")}_Monthly_Accounting_${DateFormat('yyyyMMdd').format(DateTime.now())}.csv';
+    final filename = '${orderProvider.storeName.replaceAll(" ", "_")}_Filtered_Accounting_${DateFormat('yyyyMMdd').format(DateTime.now())}.csv';
     final bytes = utf8.encode(csv.toString());
     await Printing.sharePdf(bytes: bytes, filename: filename);
 
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('CSV Export Generated: ${orders.length} transactions ready for QuickBooks / Excel.'),
+          content: Text('CSV Export Generated: ${orders.length} transactions matching your filters.'),
+          backgroundColor: AppColors.success,
+          duration: const Duration(seconds: 4),
+        ),
+      );
+    }
+  }
+
+  Future<void> _exportItemizedCsv() async {
+    final orderProvider = context.read<OrderProvider>();
+    final orders = await _orderService.getFilteredOrders(
+      startDate: _exportStartDate,
+      endDate: _exportEndDate,
+      paymentMethod: _exportPaymentFilter,
+      status: _exportStatusFilter,
+    );
+    final StringBuffer csv = StringBuffer();
+    
+    // Header Info
+    csv.writeln('Store Name,${orderProvider.storeName}');
+    csv.writeln('Store Address,${orderProvider.storeAddress.replaceAll(",", ";")}');
+    csv.writeln('VAT REG TIN,${orderProvider.tin}');
+    csv.writeln('Export Date,${DateFormat('yyyy-MM-dd HH:mm').format(DateTime.now())}');
+    csv.writeln('Report Type,Filtered Itemized Inventory Log');
+    csv.writeln('Filters Applied,Date Range: ${DateFormat("yyyy-MM-dd").format(_exportStartDate)} to ${DateFormat("yyyy-MM-dd").format(_exportEndDate)} | Payment: $_exportPaymentFilter | Status: $_exportStatusFilter');
+    csv.writeln('');
+    csv.writeln('Order ID,Timestamp,Product Name,Category,Size,Temperature,Add-ons,Quantity,Item Total');
+
+    int totalItemsExported = 0;
+    for (var o in orders) {
+      final String orderId = o['id'] as String;
+      final String timestamp = o['timestamp'] as String;
+      final items = await _db.getOrderItems(orderId);
+      for (var item in items) {
+        final String pName = item['productName']?.toString().replaceAll(',', ';') ?? '';
+        final String size = item['selectedSize']?.toString() ?? '';
+        final String temp = item['selectedTemperature']?.toString() ?? '';
+        final String addOns = item['selectedAddOns']?.toString().replaceAll(',', ';') ?? 'None';
+        final int qty = item['quantity'] as int;
+        final double itemTotal = (item['itemTotal'] as num?)?.toDouble() ?? 0.0;
+
+        // Get category friendly name
+        String catName = 'Other';
+        final match = mockProducts.where((p) => p.name == item['productName']).toList();
+        if (match.isNotEmpty) {
+          final catId = match.first.categoryId;
+          final catMatch = mockCategories.where((c) => c.id == catId).toList();
+          if (catMatch.isNotEmpty) catName = catMatch.first.name;
+        }
+
+        csv.writeln('$orderId,$timestamp,$pName,$catName,$size,$temp,$addOns,$qty,$itemTotal');
+        totalItemsExported++;
+      }
+    }
+
+    final filename = '${orderProvider.storeName.replaceAll(" ", "_")}_Filtered_Inventory_${DateFormat('yyyyMMdd').format(DateTime.now())}.csv';
+    final bytes = utf8.encode(csv.toString());
+    await Printing.sharePdf(bytes: bytes, filename: filename);
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Itemized CSV Generated: $totalItemsExported line items matching your filters.'),
           backgroundColor: AppColors.success,
           duration: const Duration(seconds: 4),
         ),
