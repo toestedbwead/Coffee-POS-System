@@ -4,7 +4,7 @@ import '../theme/app_theme.dart';
 // LatteButton - Primary Action Button
 class LatteButton extends StatelessWidget {
   final String label;
-  final VoidCallback onPressed;
+  final VoidCallback? onPressed;
   final bool isLoading;
   final double? width;
   final double height;
@@ -13,7 +13,7 @@ class LatteButton extends StatelessWidget {
   const LatteButton({
     Key? key,
     required this.label,
-    required this.onPressed,
+    this.onPressed,
     this.isLoading = false,
     this.width,
     this.height = 48,

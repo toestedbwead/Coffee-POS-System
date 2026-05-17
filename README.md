@@ -58,7 +58,8 @@ Project Latte is a high-speed, offline-first Point of Sale (POS) system built wi
 ### 🔄 In Progress / Planned
 
 #### Phase 4: Database & Business Logic
-- [ ] SQLite database initialization for Windows desktop
+- [x] SQLite database initialization for Windows desktop
+- [x] Provider state management integration (`OrderProvider`)
 - [ ] CRUD operations for:
   - Products (admin panel)
   - Orders (transaction history)
@@ -72,9 +73,9 @@ Project Latte is a high-speed, offline-first Point of Sale (POS) system built wi
   - Audit logging for voids and discounts
 
 #### Phase 5: Payments & Receipts
-- [ ] Payment method selection:
-  - Cash payment with change calculator
-  - e-Wallet payment with reference number capture
+- [x] Payment method selection:
+  - [x] Cash payment with change calculator
+  - [x] e-Wallet payment with reference number capture
 - [ ] Receipt generation:
   - 80mm thermal printer format
   - Receipt preview before printing
@@ -208,8 +209,8 @@ Project-Latte/
 | 1 | Design System | ✅ Complete | - |
 | 2 | Data Models & Mock Data | ✅ Complete | - |
 | 3 | Core Cashier UI | ✅ Complete | - |
-| 4 | Database & Business Logic | 🔄 Next | Week 1-2 |
-| 5 | Payments & Receipts | ⏳ Planned | Week 3-4 |
+| 4 | Database & Business Logic | 🔄 In Progress | Week 1-2 |
+| 5 | Payments & Receipts | 🔄 In Progress | Week 3-4 |
 | 6 | Admin & Reporting | ⏳ Planned | Week 5-6 |
 | 7 | Advanced Features | ⏳ Backlog | Post-MVP |
 

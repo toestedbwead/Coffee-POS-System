@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../data/mock_menu.dart';
 import '../models/product_model.dart';
+import '../providers/order_provider.dart';
 import '../theme/app_theme.dart';
 import '../widgets/latte_components.dart';
+import '../widgets/payment_modal.dart';
 
 class CashierScreen extends StatefulWidget {
   const CashierScreen({Key? key}) : super(key: key);
@@ -13,7 +16,6 @@ class CashierScreen extends StatefulWidget {
 
 class _CashierScreenState extends State<CashierScreen> {
   String selectedCategoryId = '1'; // Default to Espresso
-  List<OrderItem> orderItems = [];
 
   // Get products for selected category
   List<Product> getDisplayProducts() {
@@ -22,35 +24,13 @@ class _CashierScreenState extends State<CashierScreen> {
 
   // Add item to order
   void addToOrder(Product product) {
+    final orderProvider = context.read<OrderProvider>();
     showDialog(
       context: context,
       builder: (context) => ProductSelectionDialog(
         product: product,
         onAdd: (OrderItem item) {
-          setState(() {
-            // Check if product with same customization already exists
-            final existingIndex = orderItems.indexWhere(
-              (o) =>
-                  o.product.id == item.product.id &&
-                  o.selectedSize == item.selectedSize &&
-                  o.selectedTemperature == item.selectedTemperature,
-            );
-
-            if (existingIndex != -1) {
-              // Increment quantity if same product with same options
-              orderItems[existingIndex] = OrderItem(
-                id: orderItems[existingIndex].id,
-                product: orderItems[existingIndex].product,
-                selectedSize: orderItems[existingIndex].selectedSize,
-                selectedTemperature:
-                    orderItems[existingIndex].selectedTemperature,
-                selectedAddOns: orderItems[existingIndex].selectedAddOns,
-                quantity: orderItems[existingIndex].quantity + 1,
-              );
-            } else {
-              orderItems.add(item);
-            }
-          });
+          orderProvider.addItem(item);
           Navigator.pop(context);
         },
       ),
@@ -59,37 +39,20 @@ class _CashierScreenState extends State<CashierScreen> {
 
   // Remove item from order
   void removeFromOrder(int index) {
-    setState(() {
-      orderItems.removeAt(index);
-    });
-  }
-
-  // Calculate totals
-  double getSubtotal() {
-    return orderItems.fold(0, (sum, item) => sum + item.getTotal());
-  }
-
-  double getTax(double subtotal) {
-    // 12% VAT for Philippines
-    return subtotal * 0.12;
-  }
-
-  double getTotal() {
-    final subtotal = getSubtotal();
-    return subtotal + getTax(subtotal);
+    context.read<OrderProvider>().removeItem(index);
   }
 
   void clearOrder() {
-    setState(() {
-      orderItems.clear();
-    });
+    context.read<OrderProvider>().clearOrder();
   }
 
   @override
   Widget build(BuildContext context) {
-    final subtotal = getSubtotal();
-    final tax = getTax(subtotal);
-    final total = getTotal();
+    final orderProvider = context.watch<OrderProvider>();
+    final orderItems = orderProvider.items;
+    final subtotal = orderProvider.subtotal;
+    final tax = orderProvider.vat;
+    final total = orderProvider.total;
 
     return Scaffold(
       appBar: AppBar(
@@ -269,10 +232,38 @@ class _CashierScreenState extends State<CashierScreen> {
                     tax: tax,
                     total: total,
                     onCheckout: () {
-                      // TODO: Implement checkout
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Checkout not yet implemented'),
+                      if (orderItems.isEmpty) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Cannot checkout an empty order.'),
+                            backgroundColor: Colors.red,
+                          ),
+                        );
+                        return;
+                      }
+                      showDialog(
+                        context: context,
+                        builder: (context) => PaymentModalDialog(
+                          totalAmount: total,
+                          onConfirm: (paymentMethod) async {
+                            Navigator.pop(context); // Close modal
+                            final success = await orderProvider.processCheckout(paymentMethod);
+                            if (success) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Order saved successfully!'),
+                                  backgroundColor: Colors.green,
+                                ),
+                              );
+                            } else {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Failed to save order.'),
+                                  backgroundColor: Colors.red,
+                                ),
+                              );
+                            }
+                          },
                         ),
                       );
                     },

@@ -1,0 +1,100 @@
+import 'package:flutter/foundation.dart';
+import '../models/product_model.dart';
+import '../services/tax_service.dart';
+import '../services/order_service.dart';
+
+class OrderProvider with ChangeNotifier {
+  final OrderService _orderService = OrderService();
+  
+  List<OrderItem> _items = [];
+  bool _applySCPWD = false;
+  String? _scPwdID;
+
+  List<OrderItem> get items => _items;
+  bool get applySCPWD => _applySCPWD;
+  String? get scPwdID => _scPwdID;
+
+  // Calculation Getters using TaxService
+  double get subtotal => _items.fold(0, (sum, item) => sum + item.getTotal());
+  
+  Map<String, dynamic> get taxBreakdown => 
+      TaxService.getReceiptBreakdown(subtotal, applySCPWD: _applySCPWD);
+
+  double get vat => taxBreakdown['vat'] as double;
+  double get total => taxBreakdown['totalAmount'] as double;
+  double get discount => taxBreakdown['scPwdDiscount'] as double;
+
+  // Actions
+  void addItem(OrderItem item) {
+    // Check if product with same customization already exists
+    final existingIndex = _items.indexWhere(
+      (o) =>
+          o.product.id == item.product.id &&
+          o.selectedSize == item.selectedSize &&
+          o.selectedTemperature == item.selectedTemperature &&
+          _areAddOnsEqual(o.selectedAddOns, item.selectedAddOns),
+    );
+
+    if (existingIndex != -1) {
+      _items[existingIndex] = OrderItem(
+        id: _items[existingIndex].id,
+        product: _items[existingIndex].product,
+        selectedSize: _items[existingIndex].selectedSize,
+        selectedTemperature: _items[existingIndex].selectedTemperature,
+        selectedAddOns: _items[existingIndex].selectedAddOns,
+        quantity: _items[existingIndex].quantity + item.quantity,
+      );
+    } else {
+      _items.add(item);
+    }
+    notifyListeners();
+  }
+
+  void removeItem(int index) {
+    if (index >= 0 && index < _items.length) {
+      _items.removeAt(index);
+      notifyListeners();
+    }
+  }
+
+  void clearOrder() {
+    _items = [];
+    _applySCPWD = false;
+    _scPwdID = null;
+    notifyListeners();
+  }
+
+  void toggleSCPWD(bool value, {String? id}) {
+    _applySCPWD = value;
+    if (value) _scPwdID = id;
+    notifyListeners();
+  }
+
+  Future<bool> processCheckout(String paymentMethod) async {
+    if (_items.isEmpty) return false;
+
+    final order = await _orderService.createAndSaveOrder(
+      items: _items,
+      paymentMethod: paymentMethod,
+      applySCPWD: _applySCPWD,
+      scPwdID: _scPwdID,
+    );
+
+    if (order != null) {
+      clearOrder();
+      return true;
+    }
+    return false;
+  }
+
+  // Helper for comparing add-ons
+  bool _areAddOnsEqual(List<AddOn> a, List<AddOn> b) {
+    if (a.length != b.length) return false;
+    final aNames = a.map((e) => e.name).toList()..sort();
+    final bNames = b.map((e) => e.name).toList()..sort();
+    for (int i = 0; i < aNames.length; i++) {
+      if (aNames[i] != bNames[i]) return false;
+    }
+    return true;
+  }
+}
