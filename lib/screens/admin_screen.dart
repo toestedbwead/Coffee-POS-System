@@ -529,72 +529,124 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
   }
 
   Future<void> _exportSummaryPdf(String type) async {
+    final orderProvider = context.read<OrderProvider>();
     final doc = pw.Document();
-    final summary = await _orderService.getDailySummary(DateTime.now());
+    final summary = await _orderService.getDailySummary(_selectedDate);
     final totalRev = (summary['totalRevenue'] as num?)?.toDouble() ?? 0.0;
     final totalTax = (summary['totalTax'] as num?)?.toDouble() ?? 0.0;
+    final totalDiscounts = (summary['totalDiscounts'] as num?)?.toDouble() ?? 0.0;
     final totalTrans = (summary['totalTransactions'] as num?)?.toInt() ?? 0;
+    final totalItems = (summary['totalItems'] as num?)?.toInt() ?? 0;
+    final vatRateStr = (orderProvider.vatRate * 100).toStringAsFixed(0);
 
     doc.addPage(
       pw.Page(
         pageFormat: PdfPageFormat.a4,
         build: (pw.Context context) {
-          return pw.Column(
-            crossAxisAlignment: pw.CrossAxisAlignment.start,
-            children: [
-              pw.Text('PROJECT LATTE - $type Sales Report', style: pw.TextStyle(fontSize: 24, fontWeight: pw.FontWeight.bold)),
-              pw.SizedBox(height: 8),
-              pw.Text('Generated: ${DateFormat('yyyy-MM-dd HH:mm').format(DateTime.now())}', style: const pw.TextStyle(fontSize: 12, color: PdfColors.grey700)),
-              pw.SizedBox(height: 24),
-              pw.Divider(),
-              pw.SizedBox(height: 24),
+          return pw.Padding(
+            padding: const pw.EdgeInsets.all(24),
+            child: pw.Column(
+              crossAxisAlignment: pw.CrossAxisAlignment.start,
+              children: [
+                pw.Text(orderProvider.storeName, style: pw.TextStyle(fontSize: 26, fontWeight: pw.FontWeight.bold)),
+                pw.SizedBox(height: 4),
+                pw.Text('${orderProvider.storeAddress} | TIN: ${orderProvider.tin}', style: const pw.TextStyle(fontSize: 12, color: PdfColors.grey700)),
+                pw.SizedBox(height: 16),
+                pw.Divider(thickness: 2),
+                pw.SizedBox(height: 16),
+                pw.Text('$type Sales Report - ${DateFormat('MMMM dd, yyyy').format(_selectedDate)}', style: pw.TextStyle(fontSize: 20, fontWeight: pw.FontWeight.bold)),
+                pw.SizedBox(height: 6),
+                pw.Text('Generated: ${DateFormat('yyyy-MM-dd HH:mm').format(DateTime.now())}', style: const pw.TextStyle(fontSize: 11, color: PdfColors.grey600)),
+                pw.SizedBox(height: 28),
 
-              pw.Row(
-                mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-                children: [
-                  pw.Text('Gross Revenue:', style: pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold)),
-                  pw.Text('PHP ${totalRev.toStringAsFixed(2)}', style: pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold)),
-                ],
-              ),
-              pw.SizedBox(height: 12),
-              pw.Row(
-                mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-                children: [
-                  pw.Text('Total VAT Collected (12%):', style: const pw.TextStyle(fontSize: 14)),
-                  pw.Text('PHP ${totalTax.toStringAsFixed(2)}', style: const pw.TextStyle(fontSize: 14)),
-                ],
-              ),
-              pw.SizedBox(height: 12),
-              pw.Row(
-                mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-                children: [
-                  pw.Text('Total Transactions:', style: const pw.TextStyle(fontSize: 14)),
-                  pw.Text('$totalTrans', style: const pw.TextStyle(fontSize: 14)),
-                ],
-              ),
-              pw.SizedBox(height: 36),
-              pw.Text('END OF REPORT', style: pw.TextStyle(fontSize: 10, fontWeight: pw.FontWeight.bold, color: PdfColors.grey500)),
-            ],
+                pw.Container(
+                  padding: const pw.EdgeInsets.all(16),
+                  decoration: pw.BoxDecoration(color: PdfColors.grey100, borderRadius: pw.BorderRadius.circular(8)),
+                  child: pw.Column(
+                    children: [
+                      pw.Row(
+                        mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                        children: [
+                          pw.Text('Gross Revenue:', style: pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold)),
+                          pw.Text('PHP ${totalRev.toStringAsFixed(2)}', style: pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold)),
+                        ],
+                      ),
+                      pw.SizedBox(height: 12),
+                      pw.Divider(),
+                      pw.SizedBox(height: 12),
+                      pw.Row(
+                        mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                        children: [
+                          pw.Text('Total VAT Collected ($vatRateStr%):', style: const pw.TextStyle(fontSize: 14)),
+                          pw.Text('PHP ${totalTax.toStringAsFixed(2)}', style: const pw.TextStyle(fontSize: 14)),
+                        ],
+                      ),
+                      pw.SizedBox(height: 8),
+                      pw.Row(
+                        mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                        children: [
+                          pw.Text('SC/PWD Discounts Applied:', style: const pw.TextStyle(fontSize: 14)),
+                          pw.Text('-PHP ${totalDiscounts.toStringAsFixed(2)}', style: const pw.TextStyle(fontSize: 14, color: PdfColors.red700)),
+                        ],
+                      ),
+                      pw.SizedBox(height: 8),
+                      pw.Row(
+                        mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                        children: [
+                          pw.Text('Total Transactions:', style: const pw.TextStyle(fontSize: 14)),
+                          pw.Text('$totalTrans', style: const pw.TextStyle(fontSize: 14)),
+                        ],
+                      ),
+                      pw.SizedBox(height: 8),
+                      pw.Row(
+                        mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                        children: [
+                          pw.Text('Total Items Sold:', style: const pw.TextStyle(fontSize: 14)),
+                          pw.Text('$totalItems', style: const pw.TextStyle(fontSize: 14)),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+
+                pw.SizedBox(height: 48),
+                pw.Divider(borderStyle: pw.BorderStyle.dashed),
+                pw.SizedBox(height: 12),
+                pw.Text('OFFICIAL ACCOUNTING & TAX COMPLIANCE EXPORT', style: pw.TextStyle(fontSize: 10, fontWeight: pw.FontWeight.bold, color: PdfColors.grey600)),
+                pw.SizedBox(height: 4),
+                pw.Text('Confidential - Internal Business Use Only', style: const pw.TextStyle(fontSize: 9, color: PdfColors.grey500)),
+              ],
+            ),
           );
         },
       ),
     );
 
-    await Printing.sharePdf(bytes: await doc.save(), filename: 'Latte_${type}_Report_${DateFormat('yyyyMMdd').format(DateTime.now())}.pdf');
+    await Printing.sharePdf(bytes: await doc.save(), filename: '${orderProvider.storeName.replaceAll(" ", "_")}_${type}_Report_${DateFormat('yyyyMMdd').format(_selectedDate)}.pdf');
   }
 
   Future<void> _exportMonthlyCsv() async {
+    final orderProvider = context.read<OrderProvider>();
     final orders = await _db.getAllOrders();
     final StringBuffer csv = StringBuffer();
-    csv.writeln('Order ID,Timestamp,Subtotal,VAT,Total,Payment Method,Status');
+    
+    // Header Info
+    csv.writeln('Store Name,${orderProvider.storeName}');
+    csv.writeln('Store Address,${orderProvider.storeAddress.replaceAll(",", ";")}');
+    csv.writeln('VAT REG TIN,${orderProvider.tin}');
+    csv.writeln('Export Date,${DateFormat('yyyy-MM-dd HH:mm').format(DateTime.now())}');
+    csv.writeln('');
+    csv.writeln('Order ID,Timestamp,Subtotal,VAT Amount,Total,Payment Method,Status,Customer Type,SC/PWD Discount');
 
     for (var o in orders) {
-      csv.writeln('${o["id"]},${o["timestamp"]},${o["subtotal"]},${o["taxAmount"]},${o["total"]},${o["paymentMethod"]},${o["status"]}');
+      final String custName = o['customerName']?.toString() ?? 'Guest';
+      final double discount = (o['discountAmount'] as num?)?.toDouble() ?? 0.0;
+      csv.writeln('${o["id"]},${o["timestamp"]},${o["subtotal"]},${o["taxAmount"]},${o["total"]},${o["paymentMethod"]},${o["status"]},$custName,$discount');
     }
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('CSV Export Generated: ${orders.length} records ready for Excel.'),
+        content: Text('CSV Export Generated: ${orders.length} transactions ready for QuickBooks / Excel.'),
         backgroundColor: AppColors.success,
         duration: const Duration(seconds: 4),
       ),

@@ -208,6 +208,7 @@ class DatabaseHelper {
 
       double totalRevenue = 0;
       double totalTax = 0;
+      double totalDiscounts = 0;
       int totalTransactions = 0;
       int totalItems = 0;
 
@@ -215,6 +216,7 @@ class DatabaseHelper {
         if (order['status'] != 'Voided') {
           totalRevenue += order['total'] as double;
           totalTax += order['taxAmount'] as double;
+          totalDiscounts += (order['discountAmount'] as num?)?.toDouble() ?? 0.0;
           totalTransactions++;
 
           // Count items in this order
@@ -229,6 +231,7 @@ class DatabaseHelper {
         'date': date,
         'totalRevenue': totalRevenue,
         'totalTax': totalTax,
+        'totalDiscounts': totalDiscounts,
         'totalTransactions': totalTransactions,
         'totalItems': totalItems,
         'averageTransactionValue': totalTransactions > 0
